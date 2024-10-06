@@ -52,11 +52,11 @@ Team id: `d6020e5c-d553-4262-acfa-cb16ab34cc86`
 
 1. Check instructions about MinIO Client: https://ansperformance.eu/study/data-challenge/data.html#using-minio-client
 2. Put `.exe` file in this repository in main directory
-3. Configure alias `mc.exe alias set dc24 https://s3.opensky-network.org/ ACCESS_KEY SECRET_KEY`, where `ACCESS_KEY` and `ACCESS_KEY` needed to be set
+3. Configure alias `./mc.exe alias set dc24 https://s3.opensky-network.org/ ACCESS_KEY SECRET_KEY`, where `ACCESS_KEY` and `ACCESS_KEY` needed to be set
 4. Use the following command (for Windows): 
 
 ```Bash
-mc.exe cp .\submissions\team_loyal_hippo_v1_d6020e5c-d553-4262-acfa-cb16ab34cc86.csv dc24/submissions/team_loyal_hippo_v1_d6020e5c-d553-4262-acfa-cb16ab34cc86.csv
+./mc.exe cp .\submissions\team_loyal_hippo_v2_d6020e5c-d553-4262-acfa-cb16ab34cc86.csv dc24/submissions/team_loyal_hippo_v2_d6020e5c-d553-4262-acfa-cb16ab34cc86.csv
 ```
 
 After that according to th information from [data challenge page](https://ansperformance.eu/study/data-challenge/data.html#ranking)
@@ -79,11 +79,11 @@ to download the data into data folder.
 
 Table 1. Model versions and corresponding submissions ([markdown_tables online generation service](https://tablesgenerator.com/markdown_tables) was used to generate table below)
 
-|                   **Submission file name**                   | **Model name** | **Commit** |                                                           **Description**                                                           |
-|:------------------------------------------------------------:|:--------------:|:----------:|:-----------------------------------------------------------------------------------------------------------------------------------:|
-| team_loyal_hippo_v1_d6020e5c-d553-4262-acfa-cb16ab34cc86.csv |  model_v1.pkl  |            | Default sklearn random forest with numerical  features: "month", "day_of_week", "flight_duration", "taxiout_time", "flown_distance" |
-|                                                              |                |            |                                                                                                                                     |
-|                                                              |                |            |                                                                                                                                     |
+|                   **Submission file name**                   | **Model name** |                                      **Commit**                                     |                                                           **Description**                                                           |
+|:------------------------------------------------------------:|:--------------:|:-----------------------------------------------------------------------------------:|:-----------------------------------------------------------------------------------------------------------------------------------:|
+| team_loyal_hippo_v1_d6020e5c-d553-4262-acfa-cb16ab34cc86.csv |  model_v1.pkl  | https://github.com/Dreamlone/atowpy/commit/0f004586ae3070c4d4df82e9820b0d9279972691 | Default sklearn random forest with numerical  features: "month", "day_of_week", "flight_duration", "taxiout_time", "flown_distance" |
+| team_loyal_hippo_v2_d6020e5c-d553-4262-acfa-cb16ab34cc86.csv |  model_v2.pkl  |                                                                                     |              Default sklearn random forest with both numerical and basic categorical features (using one hot encoding)              |
+|                                                              |                |                                                                                     |                                                                                                                                     |
 
 To get submission file with desired version, switch to commit, go to `examples` folder and 
 launch script `predict.py` - it will generate prediction dataframe with desired file name (if the model exists).

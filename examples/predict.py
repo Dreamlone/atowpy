@@ -8,10 +8,9 @@ from atowpy.version import MODEL_FILE
 
 def make_prediction():
     """ Use serialized model to generate prediction """
-    model_path = Path(get_models_path(), MODEL_FILE)
     data_path = get_data_path()
 
-    model = SimpleModel(model_path)
+    model = SimpleModel("load")
 
     predicted_dataframe = model.predict(data_path)
     save_prediction_dataframe_as_file(predicted_dataframe)
