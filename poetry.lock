@@ -1,0 +1,754 @@
+[[package]]
+name = "anyio"
+version = "4.6.0"
+description = "High level compatibility layer for multiple asynchronous event loop implementations"
+category = "main"
+optional = false
+python-versions = ">=3.9"
+
+[package.dependencies]
+exceptiongroup = {version = ">=1.0.2", markers = "python_version < \"3.11\""}
+idna = ">=2.8"
+sniffio = ">=1.1"
+typing-extensions = {version = ">=4.1", markers = "python_version < \"3.11\""}
+
+[package.extras]
+doc = ["packaging", "Sphinx (>=7.4,<8.0)", "sphinx-rtd-theme", "sphinx-autodoc-typehints (>=1.2.0)"]
+test = ["anyio", "coverage[toml] (>=7)", "exceptiongroup (>=1.2.0)", "hypothesis (>=4.0)", "psutil (>=5.9)", "pytest (>=7.0)", "pytest-mock (>=3.6.1)", "trustme", "uvloop (>=0.21.0b1)"]
+trio = ["trio (>=0.26.1)"]
+
+[[package]]
+name = "appdirs"
+version = "1.4.4"
+description = "A small Python module for determining appropriate platform-specific dirs, e.g. a \"user data dir\"."
+category = "main"
+optional = false
+python-versions = "*"
+
+[[package]]
+name = "argon2-cffi"
+version = "23.1.0"
+description = "Argon2 for Python"
+category = "main"
+optional = false
+python-versions = ">=3.7"
+
+[package.dependencies]
+argon2-cffi-bindings = "*"
+
+[package.extras]
+dev = ["argon2-cffi", "tox (>4)"]
+docs = ["furo", "myst-parser", "sphinx", "sphinx-copybutton", "sphinx-notfound-page"]
+tests = ["hypothesis", "pytest"]
+typing = ["mypy"]
+
+[[package]]
+name = "argon2-cffi-bindings"
+version = "21.2.0"
+description = "Low-level CFFI bindings for Argon2"
+category = "main"
+optional = false
+python-versions = ">=3.6"
+
+[package.dependencies]
+cffi = ">=1.0.1"
+
+[package.extras]
+dev = ["pytest", "cogapp", "pre-commit", "wheel"]
+tests = ["pytest"]
+
+[[package]]
+name = "certifi"
+version = "2024.8.30"
+description = "Python package for providing Mozilla's CA Bundle."
+category = "main"
+optional = false
+python-versions = ">=3.6"
+
+[[package]]
+name = "cffi"
+version = "1.17.1"
+description = "Foreign Function Interface for Python calling C code."
+category = "main"
+optional = false
+python-versions = ">=3.8"
+
+[package.dependencies]
+pycparser = "*"
+
+[[package]]
+name = "charset-normalizer"
+version = "3.3.2"
+description = "The Real First Universal Charset Detector. Open, modern and actively maintained alternative to Chardet."
+category = "main"
+optional = false
+python-versions = ">=3.7.0"
+
+[[package]]
+name = "colorama"
+version = "0.4.6"
+description = "Cross-platform colored terminal text."
+category = "main"
+optional = false
+python-versions = "!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,!=3.5.*,!=3.6.*,>=2.7"
+
+[[package]]
+name = "contourpy"
+version = "1.3.0"
+description = "Python library for calculating contours of 2D quadrilateral grids"
+category = "main"
+optional = false
+python-versions = ">=3.9"
+
+[package.dependencies]
+numpy = ">=1.23"
+
+[package.extras]
+docs = ["furo", "sphinx (>=7.2)", "sphinx-copybutton"]
+bokeh = ["bokeh", "selenium"]
+mypy = ["contourpy", "docutils-stubs", "mypy (==1.11.1)", "types-pillow"]
+test = ["contourpy", "matplotlib", "pillow"]
+test-no-images = ["pytest", "pytest-cov", "pytest-rerunfailures", "pytest-xdist", "wurlitzer"]
+
+[[package]]
+name = "cycler"
+version = "0.12.1"
+description = "Composable style cycles"
+category = "main"
+optional = false
+python-versions = ">=3.8"
+
+[package.extras]
+docs = ["ipython", "matplotlib", "numpydoc", "sphinx"]
+tests = ["pytest", "pytest-cov", "pytest-xdist"]
+
+[[package]]
+name = "exceptiongroup"
+version = "1.2.2"
+description = "Backport of PEP 654 (exception groups)"
+category = "main"
+optional = false
+python-versions = ">=3.7"
+
+[package.extras]
+test = ["pytest (>=6)"]
+
+[[package]]
+name = "fonttools"
+version = "4.54.1"
+description = "Tools to manipulate font files"
+category = "main"
+optional = false
+python-versions = ">=3.8"
+
+[package.extras]
+all = ["fs (>=2.2.0,<3)", "lxml (>=4.0)", "zopfli (>=0.1.4)", "lz4 (>=1.7.4.2)", "pycairo", "matplotlib", "sympy", "skia-pathops (>=0.5.0)", "uharfbuzz (>=0.23.0)", "brotlicffi (>=0.8.0)", "scipy", "brotli (>=1.0.1)", "munkres", "unicodedata2 (>=15.1.0)", "xattr"]
+graphite = ["lz4 (>=1.7.4.2)"]
+interpolatable = ["pycairo", "scipy", "munkres"]
+lxml = ["lxml (>=4.0)"]
+pathops = ["skia-pathops (>=0.5.0)"]
+plot = ["matplotlib"]
+repacker = ["uharfbuzz (>=0.23.0)"]
+symfont = ["sympy"]
+type1 = ["xattr"]
+ufo = ["fs (>=2.2.0,<3)"]
+unicode = ["unicodedata2 (>=15.1.0)"]
+woff = ["zopfli (>=0.1.4)", "brotlicffi (>=0.8.0)", "brotli (>=1.0.1)"]
+
+[[package]]
+name = "greenlet"
+version = "3.1.1"
+description = "Lightweight in-process concurrent programming"
+category = "main"
+optional = false
+python-versions = ">=3.7"
+
+[package.extras]
+docs = ["sphinx", "furo"]
+test = ["objgraph", "psutil"]
+
+[[package]]
+name = "h11"
+version = "0.14.0"
+description = "A pure-Python, bring-your-own-I/O implementation of HTTP/1.1"
+category = "main"
+optional = false
+python-versions = ">=3.7"
+
+[[package]]
+name = "httpcore"
+version = "1.0.6"
+description = "A minimal low-level HTTP client."
+category = "main"
+optional = false
+python-versions = ">=3.8"
+
+[package.dependencies]
+certifi = "*"
+h11 = ">=0.13,<0.15"
+
+[package.extras]
+asyncio = ["anyio (>=4.0,<5.0)"]
+http2 = ["h2 (>=3,<5)"]
+socks = ["socksio (>=1.0.0,<2.0.0)"]
+trio = ["trio (>=0.22.0,<1.0)"]
+
+[[package]]
+name = "httpx"
+version = "0.27.2"
+description = "The next generation HTTP client."
+category = "main"
+optional = false
+python-versions = ">=3.8"
+
+[package.dependencies]
+anyio = "*"
+certifi = "*"
+httpcore = ">=1.0.0,<2.0.0"
+idna = "*"
+sniffio = "*"
+
+[package.extras]
+brotli = ["brotli", "brotlicffi"]
+cli = ["click (>=8.0.0,<9.0.0)", "pygments (>=2.0.0,<3.0.0)", "rich (>=10,<14)"]
+http2 = ["h2 (>=3,<5)"]
+socks = ["socksio (>=1.0.0,<2.0.0)"]
+zstd = ["zstandard (>=0.18.0)"]
+
+[[package]]
+name = "idna"
+version = "3.10"
+description = "Internationalized Domain Names in Applications (IDNA)"
+category = "main"
+optional = false
+python-versions = ">=3.6"
+
+[package.extras]
+all = ["ruff (>=0.6.2)", "mypy (>=1.11.2)", "pytest (>=8.3.2)", "flake8 (>=7.1.1)"]
+
+[[package]]
+name = "joblib"
+version = "1.4.2"
+description = "Lightweight pipelining with Python functions"
+category = "main"
+optional = false
+python-versions = ">=3.8"
+
+[[package]]
+name = "kiwisolver"
+version = "1.4.7"
+description = "A fast implementation of the Cassowary constraint solver"
+category = "main"
+optional = false
+python-versions = ">=3.8"
+
+[[package]]
+name = "loguru"
+version = "0.7.2"
+description = "Python logging made (stupidly) simple"
+category = "main"
+optional = false
+python-versions = ">=3.5"
+
+[package.dependencies]
+colorama = {version = ">=0.3.4", markers = "sys_platform == \"win32\""}
+win32-setctime = {version = ">=1.0.0", markers = "sys_platform == \"win32\""}
+
+[package.extras]
+dev = ["mypy (==v0.910)", "tox (==3.27.1)", "pytest (==6.1.2)", "pytest-cov (==2.12.1)", "colorama (==0.4.5)", "freezegun (==1.1.0)", "mypy (==v0.971)", "pytest-mypy-plugins (==1.9.3)", "exceptiongroup (==1.1.3)", "mypy (==v1.4.1)", "pre-commit (==3.4.0)", "tox (==4.11.0)", "pytest (==7.4.0)", "pytest-cov (==4.1.0)", "pytest-mypy-plugins (==3.0.0)", "colorama (==0.4.6)", "freezegun (==1.2.2)", "mypy (==v1.5.1)", "Sphinx (==7.2.5)", "sphinx-autobuild (==2021.3.14)", "sphinx-rtd-theme (==1.3.0)"]
+
+[[package]]
+name = "matplotlib"
+version = "3.9.2"
+description = "Python plotting package"
+category = "main"
+optional = false
+python-versions = ">=3.9"
+
+[package.dependencies]
+contourpy = ">=1.0.1"
+cycler = ">=0.10"
+fonttools = ">=4.22.0"
+kiwisolver = ">=1.3.1"
+numpy = ">=1.23"
+packaging = ">=20.0"
+pillow = ">=8"
+pyparsing = ">=2.3.1"
+python-dateutil = ">=2.7"
+
+[package.extras]
+dev = ["meson-python (>=0.13.1)", "numpy (>=1.25)", "pybind11 (>=2.6)", "setuptools_scm (>=7)", "setuptools (>=64)"]
+
+[[package]]
+name = "minio"
+version = "7.2.9"
+description = "MinIO Python SDK for Amazon S3 Compatible Cloud Storage"
+category = "main"
+optional = false
+python-versions = ">3.8"
+
+[package.dependencies]
+argon2-cffi = "*"
+certifi = "*"
+pycryptodome = "*"
+typing-extensions = "*"
+urllib3 = "*"
+
+[[package]]
+name = "numpy"
+version = "2.1.2"
+description = "Fundamental package for array computing in Python"
+category = "main"
+optional = false
+python-versions = ">=3.10"
+
+[[package]]
+name = "packaging"
+version = "24.1"
+description = "Core utilities for Python packages"
+category = "main"
+optional = false
+python-versions = ">=3.8"
+
+[[package]]
+name = "pandas"
+version = "2.2.3"
+description = "Powerful data structures for data analysis, time series, and statistics"
+category = "main"
+optional = false
+python-versions = ">=3.9"
+
+[package.dependencies]
+numpy = [
+    {version = ">=1.22.4", markers = "python_version < \"3.11\""},
+    {version = ">=1.23.2", markers = "python_version == \"3.11\""},
+    {version = ">=1.26.0", markers = "python_version >= \"3.12\""},
+]
+python-dateutil = ">=2.8.2"
+pytz = ">=2020.1"
+tzdata = ">=2022.7"
+
+[package.extras]
+test = ["hypothesis (>=6.46.1)", "pytest (>=7.3.2)", "pytest-xdist (>=2.2.0)"]
+pyarrow = ["pyarrow (>=10.0.1)"]
+performance = ["bottleneck (>=1.3.6)", "numba (>=0.56.4)", "numexpr (>=2.8.4)"]
+computation = ["scipy (>=1.10.0)", "xarray (>=2022.12.0)"]
+fss = ["fsspec (>=2022.11.0)"]
+aws = ["s3fs (>=2022.11.0)"]
+gcp = ["gcsfs (>=2022.11.0)", "pandas-gbq (>=0.19.0)"]
+excel = ["odfpy (>=1.4.1)", "openpyxl (>=3.1.0)", "python-calamine (>=0.1.7)", "pyxlsb (>=1.0.10)", "xlrd (>=2.0.1)", "xlsxwriter (>=3.0.5)"]
+parquet = ["pyarrow (>=10.0.1)"]
+feather = ["pyarrow (>=10.0.1)"]
+hdf5 = ["tables (>=3.8.0)"]
+spss = ["pyreadstat (>=1.2.0)"]
+postgresql = ["SQLAlchemy (>=2.0.0)", "psycopg2 (>=2.9.6)", "adbc-driver-postgresql (>=0.8.0)"]
+mysql = ["SQLAlchemy (>=2.0.0)", "pymysql (>=1.0.2)"]
+sql-other = ["SQLAlchemy (>=2.0.0)", "adbc-driver-postgresql (>=0.8.0)", "adbc-driver-sqlite (>=0.8.0)"]
+html = ["beautifulsoup4 (>=4.11.2)", "html5lib (>=1.1)", "lxml (>=4.9.2)"]
+xml = ["lxml (>=4.9.2)"]
+plot = ["matplotlib (>=3.6.3)"]
+output-formatting = ["jinja2 (>=3.1.2)", "tabulate (>=0.9.0)"]
+clipboard = ["PyQt5 (>=5.15.9)", "qtpy (>=2.3.0)"]
+compression = ["zstandard (>=0.19.0)"]
+consortium-standard = ["dataframe-api-compat (>=0.1.7)"]
+all = ["adbc-driver-postgresql (>=0.8.0)", "adbc-driver-sqlite (>=0.8.0)", "beautifulsoup4 (>=4.11.2)", "bottleneck (>=1.3.6)", "dataframe-api-compat (>=0.1.7)", "fastparquet (>=2022.12.0)", "fsspec (>=2022.11.0)", "gcsfs (>=2022.11.0)", "html5lib (>=1.1)", "hypothesis (>=6.46.1)", "jinja2 (>=3.1.2)", "lxml (>=4.9.2)", "matplotlib (>=3.6.3)", "numba (>=0.56.4)", "numexpr (>=2.8.4)", "odfpy (>=1.4.1)", "openpyxl (>=3.1.0)", "pandas-gbq (>=0.19.0)", "psycopg2 (>=2.9.6)", "pyarrow (>=10.0.1)", "pymysql (>=1.0.2)", "PyQt5 (>=5.15.9)", "pyreadstat (>=1.2.0)", "pytest (>=7.3.2)", "pytest-xdist (>=2.2.0)", "python-calamine (>=0.1.7)", "pyxlsb (>=1.0.10)", "qtpy (>=2.3.0)", "scipy (>=1.10.0)", "s3fs (>=2022.11.0)", "SQLAlchemy (>=2.0.0)", "tables (>=3.8.0)", "tabulate (>=0.9.0)", "xarray (>=2022.12.0)", "xlrd (>=2.0.1)", "xlsxwriter (>=3.0.5)", "zstandard (>=0.19.0)"]
+
+[[package]]
+name = "pillow"
+version = "10.4.0"
+description = "Python Imaging Library (Fork)"
+category = "main"
+optional = false
+python-versions = ">=3.8"
+
+[package.extras]
+docs = ["furo", "olefile", "sphinx (>=7.3)", "sphinx-copybutton", "sphinx-inline-tabs", "sphinxext-opengraph"]
+fpx = ["olefile"]
+mic = ["olefile"]
+tests = ["check-manifest", "coverage", "defusedxml", "markdown2", "olefile", "packaging", "pyroma", "pytest", "pytest-cov", "pytest-timeout"]
+typing = ["typing-extensions"]
+xmp = ["defusedxml"]
+
+[[package]]
+name = "pyarrow"
+version = "17.0.0"
+description = "Python library for Apache Arrow"
+category = "main"
+optional = false
+python-versions = ">=3.8"
+
+[package.dependencies]
+numpy = ">=1.16.6"
+
+[package.extras]
+test = ["pytest", "hypothesis", "cffi", "pytz", "pandas"]
+
+[[package]]
+name = "pycparser"
+version = "2.22"
+description = "C parser in Python"
+category = "main"
+optional = false
+python-versions = ">=3.8"
+
+[[package]]
+name = "pycryptodome"
+version = "3.21.0"
+description = "Cryptographic library for Python"
+category = "main"
+optional = false
+python-versions = "!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,!=3.5.*,>=2.7"
+
+[[package]]
+name = "pyjwt"
+version = "2.9.0"
+description = "JSON Web Token implementation in Python"
+category = "main"
+optional = false
+python-versions = ">=3.8"
+
+[package.extras]
+crypto = ["cryptography (>=3.4.0)"]
+dev = ["sphinx", "sphinx-rtd-theme", "zope.interface", "cryptography (>=3.4.0)", "pytest (>=6.0.0,<7.0.0)", "coverage[toml] (==5.0.4)", "pre-commit"]
+docs = ["sphinx", "sphinx-rtd-theme", "zope.interface"]
+tests = ["pytest (>=6.0.0,<7.0.0)", "coverage[toml] (==5.0.4)"]
+
+[[package]]
+name = "pyopensky"
+version = "2.9"
+description = "A Python interface for OpenSky database"
+category = "main"
+optional = false
+python-versions = ">=3.9"
+
+[package.dependencies]
+appdirs = ">=1.4.4"
+httpx = ">=0.27.2"
+minio = ">=7.2.8"
+pandas = ">=2.2.2"
+pyarrow = ">=17.0.0"
+pyjwt = ">=2.9.0"
+tqdm = ">=4.66.5"
+trino = {version = ">=0.329.0", extras = ["sqlalchemy"]}
+typing-extensions = ">=4.12.2"
+
+[package.extras]
+cartes = ["cartes (>=0.8.0)"]
+decoding = ["pymodes (>=2.18)", "rs1090 (>=0.3.0)"]
+
+[[package]]
+name = "pyparsing"
+version = "3.1.4"
+description = "pyparsing module - Classes and methods to define and execute parsing grammars"
+category = "main"
+optional = false
+python-versions = ">=3.6.8"
+
+[package.extras]
+diagrams = ["railroad-diagrams", "jinja2"]
+
+[[package]]
+name = "python-dateutil"
+version = "2.9.0.post0"
+description = "Extensions to the standard Python datetime module"
+category = "main"
+optional = false
+python-versions = "!=3.0.*,!=3.1.*,!=3.2.*,>=2.7"
+
+[package.dependencies]
+six = ">=1.5"
+
+[[package]]
+name = "pytz"
+version = "2024.2"
+description = "World timezone definitions, modern and historical"
+category = "main"
+optional = false
+python-versions = "*"
+
+[[package]]
+name = "requests"
+version = "2.32.3"
+description = "Python HTTP for Humans."
+category = "main"
+optional = false
+python-versions = ">=3.8"
+
+[package.dependencies]
+certifi = ">=2017.4.17"
+charset-normalizer = ">=2,<4"
+idna = ">=2.5,<4"
+urllib3 = ">=1.21.1,<3"
+
+[package.extras]
+socks = ["PySocks (>=1.5.6,!=1.5.7)"]
+use-chardet-on-py3 = ["chardet (>=3.0.2,<6)"]
+
+[[package]]
+name = "scikit-learn"
+version = "1.5.2"
+description = "A set of python modules for machine learning and data mining"
+category = "main"
+optional = false
+python-versions = ">=3.9"
+
+[package.dependencies]
+joblib = ">=1.2.0"
+numpy = ">=1.19.5"
+scipy = ">=1.6.0"
+threadpoolctl = ">=3.1.0"
+
+[package.extras]
+build = ["numpy (>=1.19.5)", "scipy (>=1.6.0)", "cython (>=3.0.10)", "meson-python (>=0.16.0)"]
+install = ["numpy (>=1.19.5)", "scipy (>=1.6.0)", "joblib (>=1.2.0)", "threadpoolctl (>=3.1.0)"]
+benchmark = ["matplotlib (>=3.3.4)", "pandas (>=1.1.5)", "memory_profiler (>=0.57.0)"]
+docs = ["matplotlib (>=3.3.4)", "scikit-image (>=0.17.2)", "pandas (>=1.1.5)", "seaborn (>=0.9.0)", "memory_profiler (>=0.57.0)", "sphinx (>=7.3.7)", "sphinx-copybutton (>=0.5.2)", "sphinx-gallery (>=0.16.0)", "numpydoc (>=1.2.0)", "Pillow (>=7.1.2)", "pooch (>=1.6.0)", "sphinx-prompt (>=1.4.0)", "sphinxext-opengraph (>=0.9.1)", "plotly (>=5.14.0)", "polars (>=0.20.30)", "sphinx-design (>=0.5.0)", "sphinx-design (>=0.6.0)", "sphinxcontrib-sass (>=0.3.4)", "pydata-sphinx-theme (>=0.15.3)", "sphinx-remove-toctrees (>=1.0.0.post1)"]
+examples = ["matplotlib (>=3.3.4)", "scikit-image (>=0.17.2)", "pandas (>=1.1.5)", "seaborn (>=0.9.0)", "pooch (>=1.6.0)", "plotly (>=5.14.0)"]
+tests = ["matplotlib (>=3.3.4)", "scikit-image (>=0.17.2)", "pandas (>=1.1.5)", "pytest (>=7.1.2)", "pytest-cov (>=2.9.0)", "ruff (>=0.2.1)", "black (>=24.3.0)", "mypy (>=1.9)", "pyamg (>=4.0.0)", "polars (>=0.20.30)", "pyarrow (>=12.0.0)", "numpydoc (>=1.2.0)", "pooch (>=1.6.0)"]
+maintenance = ["conda-lock (==2.5.6)"]
+
+[[package]]
+name = "scipy"
+version = "1.14.1"
+description = "Fundamental algorithms for scientific computing in Python"
+category = "main"
+optional = false
+python-versions = ">=3.10"
+
+[package.dependencies]
+numpy = ">=1.23.5,<2.3"
+
+[package.extras]
+test = ["pytest", "pytest-cov", "pytest-timeout", "pytest-xdist", "asv", "mpmath", "gmpy2", "threadpoolctl", "scikit-umfpack", "pooch", "hypothesis (>=6.30)", "array-api-strict (>=2.0)", "cython", "meson", "ninja"]
+doc = ["sphinx (>=5.0.0,<=7.3.7)", "pydata-sphinx-theme (>=0.15.2)", "sphinx-design (>=0.4.0)", "matplotlib (>=3.5)", "numpydoc", "jupytext", "myst-nb", "pooch", "jupyterlite-sphinx (>=0.13.1)", "jupyterlite-pyodide-kernel"]
+dev = ["mypy (==1.10.0)", "typing-extensions", "types-psutil", "pycodestyle", "ruff (>=0.0.292)", "cython-lint (>=0.12.2)", "rich-click", "doit (>=0.36.0)", "pydevtool"]
+
+[[package]]
+name = "seaborn"
+version = "0.13.2"
+description = "Statistical data visualization"
+category = "main"
+optional = false
+python-versions = ">=3.8"
+
+[package.dependencies]
+matplotlib = ">=3.4,<3.6.1 || >3.6.1"
+numpy = ">=1.20,<1.24.0 || >1.24.0"
+pandas = ">=1.2"
+
+[package.extras]
+dev = ["pytest", "pytest-cov", "pytest-xdist", "flake8", "mypy", "pandas-stubs", "pre-commit", "flit"]
+docs = ["numpydoc", "nbconvert", "ipykernel", "sphinx (<6.0.0)", "sphinx-copybutton", "sphinx-issues", "sphinx-design", "pyyaml", "pydata_sphinx_theme (==0.10.0rc2)"]
+stats = ["scipy (>=1.7)", "statsmodels (>=0.12)"]
+
+[[package]]
+name = "six"
+version = "1.16.0"
+description = "Python 2 and 3 compatibility utilities"
+category = "main"
+optional = false
+python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*"
+
+[[package]]
+name = "sniffio"
+version = "1.3.1"
+description = "Sniff out which async library your code is running under"
+category = "main"
+optional = false
+python-versions = ">=3.7"
+
+[[package]]
+name = "sqlalchemy"
+version = "2.0.35"
+description = "Database Abstraction Library"
+category = "main"
+optional = false
+python-versions = ">=3.7"
+
+[package.dependencies]
+greenlet = {version = "!=0.4.17", markers = "python_version < \"3.13\" and (platform_machine == \"aarch64\" or platform_machine == \"ppc64le\" or platform_machine == \"x86_64\" or platform_machine == \"amd64\" or platform_machine == \"AMD64\" or platform_machine == \"win32\" or platform_machine == \"WIN32\")"}
+typing-extensions = ">=4.6.0"
+
+[package.extras]
+asyncio = ["greenlet (!=0.4.17)"]
+mypy = ["mypy (>=0.910)"]
+mssql = ["pyodbc"]
+mssql-pymssql = ["pymssql"]
+mssql-pyodbc = ["pyodbc"]
+mysql = ["mysqlclient (>=1.4.0)"]
+mysql-connector = ["mysql-connector-python"]
+mariadb-connector = ["mariadb (>=1.0.1,!=1.1.2,!=1.1.5)"]
+oracle = ["cx_oracle (>=8)"]
+oracle-oracledb = ["oracledb (>=1.0.1)"]
+postgresql = ["psycopg2 (>=2.7)"]
+postgresql-pg8000 = ["pg8000 (>=1.29.1)"]
+postgresql-asyncpg = ["greenlet (!=0.4.17)", "asyncpg"]
+postgresql-psycopg2binary = ["psycopg2-binary"]
+postgresql-psycopg2cffi = ["psycopg2cffi"]
+postgresql-psycopg = ["psycopg (>=3.0.7)"]
+postgresql-psycopgbinary = ["psycopg[binary] (>=3.0.7)"]
+pymysql = ["pymysql"]
+aiomysql = ["greenlet (!=0.4.17)", "aiomysql (>=0.2.0)"]
+aioodbc = ["greenlet (!=0.4.17)", "aioodbc"]
+asyncmy = ["greenlet (!=0.4.17)", "asyncmy (>=0.2.3,!=0.2.4,!=0.2.6)"]
+aiosqlite = ["greenlet (!=0.4.17)", "aiosqlite", "typing_extensions (!=3.10.0.1)"]
+sqlcipher = ["sqlcipher3-binary"]
+
+[[package]]
+name = "threadpoolctl"
+version = "3.5.0"
+description = "threadpoolctl"
+category = "main"
+optional = false
+python-versions = ">=3.8"
+
+[[package]]
+name = "tqdm"
+version = "4.66.5"
+description = "Fast, Extensible Progress Meter"
+category = "main"
+optional = false
+python-versions = ">=3.7"
+
+[package.dependencies]
+colorama = {version = "*", markers = "platform_system == \"Windows\""}
+
+[package.extras]
+dev = ["pytest (>=6)", "pytest-cov", "pytest-timeout", "pytest-xdist"]
+notebook = ["ipywidgets (>=6)"]
+slack = ["slack-sdk"]
+telegram = ["requests"]
+
+[[package]]
+name = "trino"
+version = "0.330.0"
+description = "Client for the Trino distributed SQL Engine"
+category = "main"
+optional = false
+python-versions = ">=3.8"
+
+[package.dependencies]
+python-dateutil = "*"
+pytz = "*"
+requests = ">=2.31.0"
+sqlalchemy = {version = ">=1.3", optional = true, markers = "extra == \"sqlalchemy\""}
+tzlocal = "*"
+
+[package.extras]
+all = ["requests-kerberos", "sqlalchemy (>=1.3)"]
+external-authentication-token-cache = ["keyring"]
+gssapi = ["requests-gssapi", "krb5 (==0.5.1)"]
+kerberos = ["requests-kerberos"]
+sqlalchemy = ["sqlalchemy (>=1.3)"]
+tests = ["requests-kerberos", "sqlalchemy (>=1.3)", "requests-gssapi", "krb5 (==0.5.1)", "httpretty (<1.1)", "pytest", "pytest-runner", "pre-commit", "black", "isort", "keyring"]
+
+[[package]]
+name = "typing-extensions"
+version = "4.12.2"
+description = "Backported and Experimental Type Hints for Python 3.8+"
+category = "main"
+optional = false
+python-versions = ">=3.8"
+
+[[package]]
+name = "tzdata"
+version = "2024.2"
+description = "Provider of IANA time zone data"
+category = "main"
+optional = false
+python-versions = ">=2"
+
+[[package]]
+name = "tzlocal"
+version = "5.2"
+description = "tzinfo object for the local timezone"
+category = "main"
+optional = false
+python-versions = ">=3.8"
+
+[package.dependencies]
+tzdata = {version = "*", markers = "platform_system == \"Windows\""}
+
+[package.extras]
+devenv = ["pytest (>=4.3)", "pytest-mock (>=3.3)", "pytest-cov", "check-manifest", "zest.releaser"]
+
+[[package]]
+name = "urllib3"
+version = "2.2.3"
+description = "HTTP library with thread-safe connection pooling, file post, and more."
+category = "main"
+optional = false
+python-versions = ">=3.8"
+
+[package.extras]
+brotli = ["brotli (>=1.0.9)", "brotlicffi (>=0.8.0)"]
+h2 = ["h2 (>=4,<5)"]
+socks = ["pysocks (>=1.5.6,!=1.5.7,<2.0)"]
+zstd = ["zstandard (>=0.18.0)"]
+
+[[package]]
+name = "win32-setctime"
+version = "1.1.0"
+description = "A small Python utility to set file creation time on Windows"
+category = "main"
+optional = false
+python-versions = ">=3.5"
+
+[package.extras]
+dev = ["pytest (>=4.6.2)", "black (>=19.3b0)"]
+
+[metadata]
+lock-version = "1.1"
+python-versions = "^3.10"
+content-hash = "2a1900321ee1a7444fe090698acd1d78e110a1b86fb84c369fbf9776f442cabc"
+
+[metadata.files]
+anyio = []
+appdirs = []
+argon2-cffi = []
+argon2-cffi-bindings = []
+certifi = []
+cffi = []
+charset-normalizer = []
+colorama = []
+contourpy = []
+cycler = []
+exceptiongroup = []
+fonttools = []
+greenlet = []
+h11 = []
+httpcore = []
+httpx = []
+idna = []
+joblib = []
+kiwisolver = []
+loguru = []
+matplotlib = []
+minio = []
+numpy = []
+packaging = []
+pandas = []
+pillow = []
+pyarrow = []
+pycparser = []
+pycryptodome = []
+pyjwt = []
+pyopensky = []
+pyparsing = []
+python-dateutil = []
+pytz = []
+requests = []
+scikit-learn = []
+scipy = []
+seaborn = []
+six = []
+sniffio = []
+sqlalchemy = []
+threadpoolctl = []
+tqdm = []
+trino = []
+typing-extensions = []
+tzdata = []
+tzlocal = []
+urllib3 = []
+win32-setctime = []
