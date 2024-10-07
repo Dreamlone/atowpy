@@ -9,14 +9,12 @@ There is a solution for effectively predicting Actual TakeOff Weight variable - 
 
 Good explanation about `taxi-out time` variable: https://www.isarsoft.com/knowledge-hub/taxi-out-time
 
-## Repository structure 
+## Solution description
 
 This repository contains all the necessary materials, scripts, saved models and 
 other artifacts needed to reproduce the solution. 
 
-It is recommended to explore current repository with [Solution description](#solution-description) section
-
-## Solution description
+It is recommended to explore current repository with [How to work with current repository](#how-to-work-with-current-repository) section
 
 ### How to work with current repository
 
@@ -85,7 +83,7 @@ Table 1. Model versions and corresponding submissions ([markdown_tables online g
 | team_loyal_hippo_v2_d6020e5c-d553-4262-acfa-cb16ab34cc86.csv |  model_v2.pkl  | [4ef2b](https://github.com/Dreamlone/atowpy/commit/4ef2b071f81fa161f053e0273051e7386aa78494) |              Default sklearn random forest with both numerical and basic categorical features (using one hot encoding)              |
 |                                                              |                |                                                                                                                                         |                                                                                                                                     |
 
-To get submission file with desired version, switch to commit, go to `examples` folder and 
+To get submission file with desired version, switch to commit (using for example `git reset --hard COMMIT`, where COMMIT is a commit hash), go to `examples` folder and 
 launch script `predict.py` - it will generate prediction dataframe with desired file name (if the model exists).
 
 If there is a need to fit the model first (it might happen if serialized model was too big to fit into 
