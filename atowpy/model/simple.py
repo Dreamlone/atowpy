@@ -26,7 +26,7 @@ class SimpleModel:
 
     model_by_name = {"rfr": RandomForestRegressor}
 
-    def __init__(self, model: str = "load"):
+    def __init__(self, model: str = "load", apply_validation: bool = True):
         self.model_name = model
         if model == "load":
             # Path to the binary file passed - load it
@@ -46,6 +46,7 @@ class SimpleModel:
                                      "airline"]
         self.target = "tow"
         self.all_columns = self.num_features + self.categorical_features + [self.target]
+        self.apply_validation = apply_validation
 
         self.x_train = None
         self.x_test = None
@@ -64,7 +65,7 @@ class SimpleModel:
                 shuffle=True)
 
             params = {"n_estimators": trial.suggest_categorical("n_estimators",
-                                                                [10, 25, 50]),
+                                                                [10, 25, 50, 100]),
                       "min_samples_split": trial.suggest_int("min_samples_split", 2, 32),
                       "min_samples_leaf": trial.suggest_int('min_samples_leaf', 1, 32),
                       "max_features": trial.suggest_categorical('max_features', ['sqrt', 'log2']),
@@ -72,7 +73,7 @@ class SimpleModel:
                                                             ["squared_error",
                                                              "friedman_mse",
                                                              "poisson"]),
-                      "max_depth": trial.suggest_int("max_depth", 3, 108, step=2)}
+                      "max_depth": trial.suggest_int("max_depth", 3, 200, step=2)}
 
             logger.debug(f"Current params: {params}")
             model = self.model_by_name[self.model_name](**params)
@@ -94,16 +95,21 @@ class SimpleModel:
             np.array(features_df[self.categorical_features])).toarray()
         numerical_features = np.array(features_df[self.num_features])
 
-        self.x_train, self.x_test, self.y_train, self.y_test = train_test_split(
-            np.hstack([numerical_features, categorical_features]),
-            np.array(features_df[self.target]),
-            test_size=0.2,
-            random_state=RANDOM_STATE,
-            shuffle=True)
+        if self.apply_validation:
+            self.x_train, self.x_test, self.y_train, self.y_test = train_test_split(
+                np.hstack([numerical_features, categorical_features]),
+                np.array(features_df[self.target]),
+                test_size=0.2,
+                random_state=RANDOM_STATE,
+                shuffle=True)
+        else:
+            # There will be no validation provided
+            self.x_train = np.hstack([numerical_features, categorical_features])
+            self.y_train = np.array(features_df[self.target])
 
         study = optuna.create_study(direction="minimize",
                                     study_name="simple model fit")
-        study.optimize(objective, n_trials=20, timeout=3600000)
+        study.optimize(objective, n_trials=50, timeout=3600000)
         best_trial = study.best_trial
 
         # Re-create the model
@@ -114,6 +120,10 @@ class SimpleModel:
         return self.model
 
     def _validate(self, x_test: np.array, y_test: np.array):
+        if self.apply_validation is False:
+            logger.debug(f"Validation is not provided for current model")
+            return None
+
         logger.info("--- MODEL VALIDATION ---")
         logger.debug(f"Validation sample size: {len(x_test)}")
         predicted = self.model.predict(x_test)
