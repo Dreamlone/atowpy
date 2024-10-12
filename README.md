@@ -54,7 +54,13 @@ Team id: `d6020e5c-d553-4262-acfa-cb16ab34cc86`
 4. Use the following command (for Windows): 
 
 ```Bash
-./mc.exe cp .\submissions\team_loyal_hippo_v2_d6020e5c-d553-4262-acfa-cb16ab34cc86.csv dc24/submissions/team_loyal_hippo_v2_d6020e5c-d553-4262-acfa-cb16ab34cc86.csv
+./mc.exe cp .\submissions\team_loyal_hippo_v3_d6020e5c-d553-4262-acfa-cb16ab34cc86.csv dc24/submissions/team_loyal_hippo_v3_d6020e5c-d553-4262-acfa-cb16ab34cc86.csv
+```
+
+Alternative command for Ubuntu:
+
+```Bash
+mc cp ./submissions/team_loyal_hippo_v3_d6020e5c-d553-4262-acfa-cb16ab34cc86.csv dc24/submissions/team_loyal_hippo_v3_d6020e5c-d553-4262-acfa-cb16ab34cc86.csv
 ```
 
 After that according to th information from [data challenge page](https://ansperformance.eu/study/data-challenge/data.html#ranking)
@@ -73,15 +79,15 @@ and models and files are paired with git commits so that each step of developmen
 can be reproduced if necessary (see Table below).
 
 **Note:** Before launching the model fit and predict method, do not forget to run `download_data.py` script
-to download the data into data folder. 
+to download the data into data folder. And then create `models` folder if it does not exist in the repository yet.
 
 Table 1. Model versions and corresponding submissions ([markdown_tables online generation service](https://tablesgenerator.com/markdown_tables) was used to generate table below)
 
-|                   **Submission file name**                   | **Model name** |                                                               **Commit**                                                                |                                                           **Description**                                                           |
-|:------------------------------------------------------------:|:--------------:|:---------------------------------------------------------------------------------------------------------------------------------------:|:-----------------------------------------------------------------------------------------------------------------------------------:|
-| team_loyal_hippo_v1_d6020e5c-d553-4262-acfa-cb16ab34cc86.csv |  model_v1.pkl  | [0f004](https://github.com/Dreamlone/atowpy/commit/0f004586ae3070c4d4df82e9820b0d9279972691) | Default sklearn random forest with numerical  features: "month", "day_of_week", "flight_duration", "taxiout_time", "flown_distance" |
-| team_loyal_hippo_v2_d6020e5c-d553-4262-acfa-cb16ab34cc86.csv |  model_v2.pkl  | [4ef2b](https://github.com/Dreamlone/atowpy/commit/4ef2b071f81fa161f053e0273051e7386aa78494) |              Default sklearn random forest with both numerical and basic categorical features (using one hot encoding)              |
-|                                                              |                |                                                                                                                                         |                                                                                                                                     |
+|                   **Submission file name**                   | **Model name** |                                          **Commit**                                          |                                                             **Description**                                                              |
+|:------------------------------------------------------------:|:--------------:|:--------------------------------------------------------------------------------------------:|:----------------------------------------------------------------------------------------------------------------------------------------:|
+| team_loyal_hippo_v1_d6020e5c-d553-4262-acfa-cb16ab34cc86.csv |  model_v1.pkl  | [0f004](https://github.com/Dreamlone/atowpy/commit/0f004586ae3070c4d4df82e9820b0d9279972691) |   Default sklearn random forest with numerical  features: "month", "day_of_week", "flight_duration", "taxiout_time", "flown_distance"    |
+| team_loyal_hippo_v2_d6020e5c-d553-4262-acfa-cb16ab34cc86.csv |  model_v2.pkl  | [4ef2b](https://github.com/Dreamlone/atowpy/commit/4ef2b071f81fa161f053e0273051e7386aa78494) |                Default sklearn random forest with both numerical and basic categorical features (using one hot encoding)                 |
+| team_loyal_hippo_v3_d6020e5c-d553-4262-acfa-cb16ab34cc86.csv |  model_v3.pkl  | [4ef2b](https://github.com/Dreamlone/atowpy/commit/4ef2b071f81fa161f053e0273051e7386aa78494) |                                                                                          RMSE metric on local validation sample: 3921.87 |
 
 To get submission file with desired version, switch to commit (using for example `git reset --hard COMMIT`, where COMMIT is a commit hash), go to `examples` folder and 
 launch script `predict.py` - it will generate prediction dataframe with desired file name (if the model exists).

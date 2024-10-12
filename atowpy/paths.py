@@ -10,11 +10,15 @@ def get_data_path():
 
 
 def get_models_path():
-    return Path(get_project_path(), 'models')
+    models_folder = Path(get_project_path(), 'models')
+    models_folder.mkdir(parents=True, exist_ok=True)
+    return models_folder
 
 
 def get_submissions_path():
-    return Path(get_project_path(), 'submissions')
+    submission_folder = Path(get_project_path(), 'submissions')
+    submission_folder.mkdir(parents=True, exist_ok=True)
+    return submission_folder
 
 
 def results_folder(folder_name: str) -> Path:

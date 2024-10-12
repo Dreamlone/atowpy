@@ -14,5 +14,5 @@ def read_challenge_set(working_directory: Path):
 def read_submission_set(working_directory: Path):
     file_name = "submission_set.csv"
     df = pd.read_csv(Path(working_directory, file_name),
-                     parse_dates=['date'])
+                     parse_dates=['date', 'actual_offblock_time', 'arrival_time'])
     return df

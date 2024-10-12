@@ -64,17 +64,17 @@ class SimpleModel:
                 shuffle=True)
 
             params = {"n_estimators": trial.suggest_categorical("n_estimators",
-                                                                [10, 50, 100]),
+                                                                [10, 25, 50]),
                       "min_samples_split": trial.suggest_int("min_samples_split", 2, 32),
                       "min_samples_leaf": trial.suggest_int('min_samples_leaf', 1, 32),
                       "max_features": trial.suggest_categorical('max_features', ['sqrt', 'log2']),
                       "criterion": trial.suggest_categorical("criterion",
                                                             ["squared_error",
-                                                             "absolute_error",
                                                              "friedman_mse",
                                                              "poisson"]),
-                      "max_depth": trial.suggest_int("max_depth", 3, 100, step=2)}
+                      "max_depth": trial.suggest_int("max_depth", 3, 108, step=2)}
 
+            logger.debug(f"Current params: {params}")
             model = self.model_by_name[self.model_name](**params)
             model = model.fit(train_features, train_target)
             predicted = model.predict(test_features)
@@ -103,7 +103,7 @@ class SimpleModel:
 
         study = optuna.create_study(direction="minimize",
                                     study_name="simple model fit")
-        study.optimize(objective, n_trials=15, timeout=3600000)
+        study.optimize(objective, n_trials=20, timeout=3600000)
         best_trial = study.best_trial
 
         # Re-create the model
