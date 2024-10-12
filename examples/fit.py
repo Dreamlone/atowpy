@@ -9,7 +9,7 @@ def fit_simple_model():
     data_path = get_data_path()
 
     # Fit random forest model
-    model = SimpleModel("rfr", apply_validation=False)
+    model = SimpleModel("rfr", apply_validation=True)
     model.fit(data_path)
 
     # Save fitted model
