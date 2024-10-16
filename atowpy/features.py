@@ -2,11 +2,17 @@ from datetime import datetime
 from pathlib import Path
 from typing import Union
 
+import numpy as np
 import pandas as pd
 from loguru import logger
 from traffic.core import Traffic
 
 from atowpy.paths import get_data_path
+
+
+FEATURES_FOR_AGGREGATION = ['latitude', 'longitude', 'altitude', 'groundspeed', 'track', 'vertical_rate',
+                            'u_component_of_wind', 'v_component_of_wind', 'temperature', 'specific_humidity',
+                            'track_unwrapped']
 
 
 def _is_file_was_assimilated_already(parquet_file: Path, extraction_file_path: Path, reference_df: pd.DataFrame) -> bool:
@@ -15,8 +21,15 @@ def _is_file_was_assimilated_already(parquet_file: Path, extraction_file_path: P
         # File with results was not created yet
         return False
 
+    date_str = parquet_file.name.split('.parquet')[0]
+
     extracted_features = pd.read_csv(extraction_file_path)
-    assimilated_flights = set(extracted_features["flight_id"].unique())
+    processed_date_df = extracted_features[extracted_features["date"] == date_str]
+
+    if processed_date_df is None or len(processed_date_df) < 1:
+        return False
+
+    return True
 
 
 def _assimilate_file(parquet_file: Path, extraction_file_path: Path, reference_df: pd.DataFrame):
@@ -26,22 +39,57 @@ def _assimilate_file(parquet_file: Path, extraction_file_path: Path, reference_d
     else:
         updated_results = []
 
-    date = parquet_file.name.split('.parquet')[0]
-    date = datetime.strptime(date, '%Y-%m-%d')
+    date_str = parquet_file.name.split('.parquet')[0]
+    date = datetime.strptime(date_str, '%Y-%m-%d')
 
     date_df = reference_df[reference_df['date'] == date]
 
+    batch_features = []
     t = (Traffic.from_file(parquet_file)
          .filter()
          .resample('1s')
          .eval())
+    processed_flights = []
+    processed_dates = []
     for _, row in date_df.iterrows():
+        # Iterate through each row
         flight_info = t.query(f'flight_id == {row.flight_id}')
-
         start = row.actual_offblock_time.strftime("%Y-%m-%d %H:%M")
         end = row.arrival_time.strftime("%Y-%m-%d %H:%M")
 
+        if flight_info is None:
+            logger.debug(f"Skip {row.flight_id}. Start {start}. End {end}."
+                         f"Because there is no information about that flight in the file")
+            continue
+
+        logger.debug(f"Start extracting features for flight {row.flight_id}")
+        processed_flights.append(row.flight_id)
+        processed_dates.append(date_str)
+
         dataframe_for_analysis = flight_info.between(start, end).data
+        # Take first 20 elements to save as features
+        dataframe_for_analysis = dataframe_for_analysis.head(20)
+        extracted_features = []
+        extracted_features_names = []
+        for feature_name in FEATURES_FOR_AGGREGATION:
+            feature = np.array(dataframe_for_analysis[feature_name])
+            extracted_features.append(np.ravel(feature))
+
+            new_features_names = [f"{feature_name}_lag_{i}" for i in range(len(feature))]
+            extracted_features_names.extend(new_features_names)
+
+        extracted_features = pd.DataFrame(np.hstack(extracted_features).reshape((1, -1)), columns=extracted_features_names)
+        batch_features.append(extracted_features)
+    batch_features = pd.concat(batch_features)
+    batch_features["flight_id"] = processed_flights
+    batch_features["date"] = processed_dates
+
+    # Extend previous results with new batch
+    updated_results.append(batch_features)
+    updated_results = pd.concat(updated_results)
+
+    updated_results.to_csv(extraction_file_path, index=False)
+    logger.debug(f"Result was stored into the file {extraction_file_path.name}")
 
 
 def trajectory_features_preparation(reference_file: Union[Path, str]):
@@ -65,11 +113,11 @@ def trajectory_features_preparation(reference_file: Union[Path, str]):
         if _is_file_was_assimilated_already(parquet_file=file,
                                             extraction_file_path=extraction_file_path,
                                             reference_df=reference_df):
-            logger.debug(f'Finished processing. File was already successfully assimilated')
+            logger.info(f'Finished assimilating process. File was already successfully assimilated')
             continue
 
         starting_time = datetime.now()
         _assimilate_file(file, extraction_file_path, reference_df)
         spend_time = datetime.now() - starting_time
-        logger.debug(f'Finished processing. Spend seconds: {spend_time.total_seconds()}')
-
+        logger.info(f'Finished assimilating process. Spend seconds: {spend_time.total_seconds()}')
+        exit()
