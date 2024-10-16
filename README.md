@@ -95,3 +95,8 @@ launch script `predict.py` - it will generate prediction dataframe with desired 
 
 If there is a need to fit the model first (it might happen if serialized model was too big to fit into 
 git 100 MGb commit limit), launch `fit.py` file and wait until file with serialized models will appear in `models` folder. 
+
+TODO: to investigate with test set
+Skip 249988727. Start 2022-03-10 00:03. End 2022-03-10 08:31.Because there is no information about that flight in the file
+Skip 252282605. Start 2022-06-07 00:00. End 2022-06-07 03:01.Because there is no information about that flight in the file
+Skip 249228163. Start 2022-01-29 00:02. End 2022-01-29 06:21.Because there is no information about that flight in the file

@@ -141,7 +141,7 @@ class SimpleModel:
 
     def predict(self, folder_with_files: Path):
         logger.debug("Features preprocessing for predict. Starting ...")
-        features_df = read_submission_set(folder_with_files)
+        features_df = self.load_data_for_submission(folder_with_files)
         features_df = self._preprocess_features(features_df)
         logger.debug("Features preprocessing for predict. Successfully finished...")
 
@@ -186,3 +186,11 @@ class SimpleModel:
 
         features_df = features_df.drop(columns=["date"])
         return features_df
+
+    @staticmethod
+    def load_data_for_model_fit(folder_with_files: Path):
+        return read_challenge_set(folder_with_files)
+
+    @staticmethod
+    def load_data_for_submission(folder_with_files: Path):
+        return read_submission_set(folder_with_files)
