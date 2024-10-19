@@ -1,15 +1,20 @@
 from atowpy.model.simple import SimpleModel
+from atowpy.model.trajectory import TrajectoryModel
 from atowpy.paths import get_data_path
 
 
-def fit_simple_model():
+import warnings
+warnings.filterwarnings('ignore')
+
+
+def fit_trajectory_model():
     """
-    Example how to fit simple model and serialize it (save)
+    Example how to fit trajectory model and serialize it (save)
     """
     data_path = get_data_path()
 
     # Fit random forest model
-    model = SimpleModel("rfr", apply_validation=True)
+    model = TrajectoryModel("rfr", apply_validation=True, vis=True)
     model.fit(data_path)
 
     # Save fitted model
@@ -17,4 +22,4 @@ def fit_simple_model():
 
 
 if __name__ == '__main__':
-    fit_simple_model()
+    fit_trajectory_model()

@@ -8,3 +8,4 @@ SUBMISSION_FILE = f"{TEAM_NAME}_v{VERSION}_{TEAM_ID}.csv"
 
 MODEL_FILE = f"model_v{VERSION}.pkl"
 ENCODER_FILE = f"encoder_v{VERSION}.pkl"
+SCALER_FILE = f"scaler_v{VERSION}.pkl"

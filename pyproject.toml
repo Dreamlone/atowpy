@@ -13,6 +13,7 @@ seaborn = "^0.13.2"
 scikit-learn = "^1.5.2"
 optuna = "^4.0.0"
 traffic = "^2.10.2"
+contextily = "^1.6.2"
 
 [tool.poetry.dev-dependencies]
 

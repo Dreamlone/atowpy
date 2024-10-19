@@ -5,15 +5,18 @@ from loguru import logger
 import numpy as np
 import pandas as pd
 import optuna
+from sklearn.linear_model import LinearRegression, Ridge
 from sklearn.model_selection import train_test_split
+from sklearn.neighbors import KNeighborsRegressor
 from sklearn.preprocessing import OneHotEncoder
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.metrics import mean_absolute_error, mean_absolute_percentage_error
 from sklearn.metrics import root_mean_squared_error
+from sklearn.preprocessing import StandardScaler
 
 from atowpy.paths import get_models_path
 from atowpy.read import read_challenge_set, read_submission_set
-from atowpy.version import MODEL_FILE, ENCODER_FILE
+from atowpy.version import MODEL_FILE, ENCODER_FILE, SCALER_FILE
 
 RANDOM_STATE = 2024
 
@@ -24,19 +27,22 @@ class SimpleModel:
     trajectories data
     """
 
-    model_by_name = {"rfr": RandomForestRegressor}
+    model_by_name = {"rfr": RandomForestRegressor,
+                     "ridge": Ridge,
+                     "knn": KNeighborsRegressor}
 
     def __init__(self, model: str = "load", apply_validation: bool = True):
         self.model_name = model
         if model == "load":
             # Path to the binary file passed - load it
-            self.model, self.encoder = self.load()
+            self.model, self.encoder, self.scaler = self.load()
             logger.info("Simple model. Core model was successfully loaded from "
                         "file")
         else:
             # Name of the model passed - need to initialize class
             self.model = self.model_by_name[model]()
             self.encoder = None
+            self.scaler = None
             logger.info("Simple model. Core model was successfully initialized")
 
         self.num_features = ["actual_offblock_hour", "arrival_hour",
@@ -64,16 +70,24 @@ class SimpleModel:
                 random_state=RANDOM_STATE,
                 shuffle=True)
 
-            params = {"n_estimators": trial.suggest_categorical("n_estimators",
-                                                                [10, 25, 50, 100]),
-                      "min_samples_split": trial.suggest_int("min_samples_split", 2, 32),
-                      "min_samples_leaf": trial.suggest_int('min_samples_leaf', 1, 32),
-                      "max_features": trial.suggest_categorical('max_features', ['sqrt', 'log2']),
-                      "criterion": trial.suggest_categorical("criterion",
-                                                            ["squared_error",
-                                                             "friedman_mse",
-                                                             "poisson"]),
-                      "max_depth": trial.suggest_int("max_depth", 3, 200, step=2)}
+            if self.model_name == "rfr":
+                params = {"n_estimators": trial.suggest_categorical("n_estimators",
+                                                                    [10, 25, 50, 100]),
+                          "min_samples_split": trial.suggest_int("min_samples_split", 2, 32),
+                          "min_samples_leaf": trial.suggest_int('min_samples_leaf', 1, 32),
+                          "max_features": trial.suggest_categorical('max_features', ['sqrt', 'log2']),
+                          "criterion": trial.suggest_categorical("criterion",
+                                                                ["squared_error",
+                                                                 "friedman_mse",
+                                                                 "poisson"]),
+                          "max_depth": trial.suggest_int("max_depth", 3, 200, step=2)}
+            elif self.model_name == "ridge":
+                params = {"alpha": trial.suggest_float("alpha", 0, 100.0),
+                          "tol": trial.suggest_float("tol", 0.0001, 0.005)}
+            else:
+                params = {"n_neighbors": trial.suggest_int("n_neighbors", 2, 50),
+                          "leaf_size": trial.suggest_int("leaf_size", 2, 50),
+                          "weights": trial.suggest_categorical('weights', ['uniform', 'distance'])}
 
             logger.debug(f"Current params: {params}")
             model = self.model_by_name[self.model_name](**params)
@@ -84,7 +98,7 @@ class SimpleModel:
             return rmse_metric
 
         logger.debug("Features preprocessing for fit. Starting ...")
-        features_df = read_challenge_set(folder_with_files)
+        features_df = self.load_data_for_model_fit(folder_with_files)
         features_df = self._preprocess_features(features_df)
         logger.debug("Features preprocessing for fit. Successfully finished...")
 
@@ -93,7 +107,8 @@ class SimpleModel:
         self.encoder = OneHotEncoder(handle_unknown='ignore')
         categorical_features = self.encoder.fit_transform(
             np.array(features_df[self.categorical_features])).toarray()
-        numerical_features = np.array(features_df[self.num_features])
+        self.scaler = StandardScaler()
+        numerical_features = self.scaler.fit_transform(np.array(features_df[self.num_features]))
 
         if self.apply_validation:
             self.x_train, self.x_test, self.y_train, self.y_test = train_test_split(
@@ -147,7 +162,7 @@ class SimpleModel:
 
         logger.debug("Model predict. Starting ...")
         categorical_features = self.encoder.transform(np.array(features_df[self.categorical_features])).toarray()
-        numerical_features = np.array(features_df[self.num_features])
+        numerical_features = self.scaler.transform(np.array(features_df[self.num_features]))
         all_features = np.hstack([numerical_features, categorical_features])
 
         predicted = self.model.predict(all_features)
@@ -164,6 +179,10 @@ class SimpleModel:
 
         with open(Path(get_models_path(), ENCODER_FILE), "wb") as f:
             pickle.dump(self.encoder, f)
+
+        with open(Path(get_models_path(), SCALER_FILE), "wb") as f:
+            pickle.dump(self.scaler, f)
+
         logger.debug("Model was successfully saved.")
 
     @staticmethod
@@ -175,7 +194,10 @@ class SimpleModel:
         with open(Path(get_models_path(), ENCODER_FILE), "rb") as f:
             encoder = pickle.load(f)
 
-        return model, encoder
+        with open(Path(get_models_path(), SCALER_FILE), "rb") as f:
+            scaler = pickle.load(f)
+
+        return model, encoder, scaler
 
     @staticmethod
     def _preprocess_features(features_df: pd.DataFrame):
@@ -187,10 +209,8 @@ class SimpleModel:
         features_df = features_df.drop(columns=["date"])
         return features_df
 
-    @staticmethod
-    def load_data_for_model_fit(folder_with_files: Path):
+    def load_data_for_model_fit(self, folder_with_files: Path):
         return read_challenge_set(folder_with_files)
 
-    @staticmethod
-    def load_data_for_submission(folder_with_files: Path):
+    def load_data_for_submission(self, folder_with_files: Path):
         return read_submission_set(folder_with_files)

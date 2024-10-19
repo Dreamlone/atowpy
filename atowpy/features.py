@@ -13,6 +13,7 @@ from atowpy.paths import get_data_path
 FEATURES_FOR_AGGREGATION = ['latitude', 'longitude', 'altitude', 'groundspeed', 'track', 'vertical_rate',
                             'u_component_of_wind', 'v_component_of_wind', 'temperature', 'specific_humidity',
                             'track_unwrapped']
+FIRST_ELEMENTS_TO_EXTRACT = 30
 
 
 def _is_file_was_assimilated_already(parquet_file: Path, extraction_file_path: Path, reference_df: pd.DataFrame) -> bool:
@@ -49,7 +50,7 @@ def _assimilate_file(parquet_file: Path, extraction_file_path: Path, reference_d
     batch_features = []
     t = (Traffic.from_file(parquet_file)
          .filter()
-         .resample('1s')
+         .resample('3s')
          .eval())
     processed_flights = []
     processed_dates = []
@@ -61,8 +62,9 @@ def _assimilate_file(parquet_file: Path, extraction_file_path: Path, reference_d
         for _, row in df.iterrows():
             # Iterate through each row
             flight_info = t.query(f'flight_id == {row.flight_id}')
-            start = row.actual_offblock_time.strftime("%Y-%m-%d %H:%M")
-            end = row.arrival_time.strftime("%Y-%m-%d %H:%M")
+            start = row.actual_offblock_time - timedelta(minutes=2)
+            start = start.strftime("%Y-%m-%d %H:%M:%S %Z")
+            end = row.arrival_time.strftime("%Y-%m-%d %H:%M:%S %Z")
 
             if flight_info is None:
                 logger.debug(f"Skip {row.flight_id}. Start {start}. End {end}."
@@ -72,12 +74,29 @@ def _assimilate_file(parquet_file: Path, extraction_file_path: Path, reference_d
             logger.debug(f"Start extracting features for flight {row.flight_id}")
             try:
                 dataframe_for_analysis = flight_info.between(start, end).data
-                # Take first 20 elements to save as features
-                dataframe_for_analysis = dataframe_for_analysis.head(20)
+                # Take first FIRST_ELEMENTS_TO_EXTRACT elements to save as features
+                i = 0
+                for _, internal_row in dataframe_for_analysis.iterrows():
+                    if i == 0:
+                        i += 1
+                        continue
+
+                    previous_row = dataframe_for_analysis.iloc[i - 1]
+                    altitude_diff = internal_row.altitude - previous_row.altitude
+                    if abs(altitude_diff) > 10:
+                        break
+                    i += 1
+                if i == 0:
+                    dataframe_for_analysis = dataframe_for_analysis.head(FIRST_ELEMENTS_TO_EXTRACT)
+                else:
+                    logger.debug(f"Shift was detected. Actual starting point is {i}")
+                    dataframe_for_analysis = dataframe_for_analysis[i: FIRST_ELEMENTS_TO_EXTRACT + i]
                 extracted_features = []
                 extracted_features_names = []
                 for feature_name in FEATURES_FOR_AGGREGATION:
                     feature = np.array(dataframe_for_analysis[feature_name])
+
+                    # Provide smoothing
                     extracted_features.append(np.ravel(feature))
 
                     new_features_names = [f"{feature_name}_lag_{i}" for i in range(len(feature))]
