@@ -13,7 +13,7 @@ from atowpy.paths import get_data_path
 FEATURES_FOR_AGGREGATION = ['latitude', 'longitude', 'altitude', 'groundspeed', 'track', 'vertical_rate',
                             'u_component_of_wind', 'v_component_of_wind', 'temperature', 'specific_humidity',
                             'track_unwrapped']
-FIRST_ELEMENTS_TO_EXTRACT = 30
+FIRST_ELEMENTS_TO_EXTRACT = 50
 
 
 def _is_file_was_assimilated_already(parquet_file: Path, extraction_file_path: Path, reference_df: pd.DataFrame) -> bool:
@@ -50,7 +50,7 @@ def _assimilate_file(parquet_file: Path, extraction_file_path: Path, reference_d
     batch_features = []
     t = (Traffic.from_file(parquet_file)
          .filter()
-         .resample('3s')
+         .resample('1s')
          .eval())
     processed_flights = []
     processed_dates = []

@@ -26,7 +26,7 @@ Project contains the following folders:
 * `data` - folder with data 
 * `examples` - scripts demonstrating how to run atowpy classes and functions
 * `models` - serialized models (different versions)
-* `submissions` - csv files with submissions 
+* `submissions` - csv files with submissions
 
 In [examples folder](./examples) there are several scripts: 
 
@@ -34,6 +34,9 @@ In [examples folder](./examples) there are several scripts:
 2. `explore_data.py` - exploratory data analysis and auxiliary visualizations
 3. `fit.py` - fitting and validating machine learning model 
 4. `predict.py` - applying fitted and saved machine learning model on top of submission set
+
+In `atowpy/version.py` file there is an information about version of the repository. To build new model change 
+`VERSION` by incrementing 1. 
 
 ### Final solution description
 
@@ -54,13 +57,13 @@ Team id: `d6020e5c-d553-4262-acfa-cb16ab34cc86`
 4. Use the following command (for Windows): 
 
 ```Bash
-./mc.exe cp .\submissions\team_loyal_hippo_v3_d6020e5c-d553-4262-acfa-cb16ab34cc86.csv dc24/submissions/team_loyal_hippo_v3_d6020e5c-d553-4262-acfa-cb16ab34cc86.csv
+./mc.exe cp .\submissions\team_loyal_hippo_v5_d6020e5c-d553-4262-acfa-cb16ab34cc86.csv dc24/submissions/team_loyal_hippo_v5_d6020e5c-d553-4262-acfa-cb16ab34cc86.csv
 ```
 
 Alternative command for Ubuntu:
 
 ```Bash
-mc cp ./submissions/team_loyal_hippo_v3_d6020e5c-d553-4262-acfa-cb16ab34cc86.csv dc24/submissions/team_loyal_hippo_v3_d6020e5c-d553-4262-acfa-cb16ab34cc86.csv
+mc cp ./submissions/team_loyal_hippo_v5_d6020e5c-d553-4262-acfa-cb16ab34cc86.csv dc24/submissions/team_loyal_hippo_v5_d6020e5c-d553-4262-acfa-cb16ab34cc86.csv
 ```
 
 After that according to th information from [data challenge page](https://ansperformance.eu/study/data-challenge/data.html#ranking)
@@ -83,20 +86,16 @@ to download the data into data folder. And then create `models` folder if it doe
 
 Table 1. Model versions and corresponding submissions ([markdown_tables online generation service](https://tablesgenerator.com/markdown_tables) was used to generate table below)
 
-| **Submission file name**                                     | **Model name** | **Commit**                                                                                   | **Description**                                                                                                                     |
-|--------------------------------------------------------------|----------------|----------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------|
-| team_loyal_hippo_v1_d6020e5c-d553-4262-acfa-cb16ab34cc86.csv | model_v1.pkl   | [0f004](https://github.com/Dreamlone/atowpy/commit/0f004586ae3070c4d4df82e9820b0d9279972691) | Default sklearn random forest with numerical  features: "month", "day_of_week", "flight_duration", "taxiout_time", "flown_distance" |
-| team_loyal_hippo_v2_d6020e5c-d553-4262-acfa-cb16ab34cc86.csv | model_v2.pkl   | [4ef2b](https://github.com/Dreamlone/atowpy/commit/4ef2b071f81fa161f053e0273051e7386aa78494) | Default sklearn random forest with both numerical and basic categorical features (using one hot encoding)                           |
-| team_loyal_hippo_v3_d6020e5c-d553-4262-acfa-cb16ab34cc86.csv | model_v3.pkl   | [151a6](https://github.com/Dreamlone/atowpy/commit/151a6a0eba9f6b85bb66924ee18a1fb893423386) | Sklearn random forest with hyperperameters optimized by optuna. RMSE metric on local validation sample: **3921.87**                 |
-| team_loyal_hippo_v4_d6020e5c-d553-4262-acfa-cb16ab34cc86.csv | model_v4.pkl   | [a57e5](https://github.com/Dreamlone/atowpy/commit/a57e50ef4f4aabedbef2ebc9b10271386e7f85bf) | Sklearn random forest with extended hyperperameters optimized by optuna. Fit on the whole dataset                                   |
+| **Submission file name**                                     | **Model name** | **Commit**                                                                                   | **Description**                                                                                                                                               |
+|--------------------------------------------------------------|----------------|----------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| team_loyal_hippo_v1_d6020e5c-d553-4262-acfa-cb16ab34cc86.csv | model_v1.pkl   | [0f004](https://github.com/Dreamlone/atowpy/commit/0f004586ae3070c4d4df82e9820b0d9279972691) | Default sklearn random forest with numerical  features: "month", "day_of_week", "flight_duration", "taxiout_time", "flown_distance"                           |
+| team_loyal_hippo_v2_d6020e5c-d553-4262-acfa-cb16ab34cc86.csv | model_v2.pkl   | [4ef2b](https://github.com/Dreamlone/atowpy/commit/4ef2b071f81fa161f053e0273051e7386aa78494) | Default sklearn random forest with both numerical and basic categorical features (using one hot encoding)                                                     |
+| team_loyal_hippo_v3_d6020e5c-d553-4262-acfa-cb16ab34cc86.csv | model_v3.pkl   | [151a6](https://github.com/Dreamlone/atowpy/commit/151a6a0eba9f6b85bb66924ee18a1fb893423386) | Sklearn random forest with hyperperameters optimized by optuna. RMSE metric on local validation sample: **3921.87**                                           |
+| team_loyal_hippo_v4_d6020e5c-d553-4262-acfa-cb16ab34cc86.csv | model_v4.pkl   | [a57e5](https://github.com/Dreamlone/atowpy/commit/a57e50ef4f4aabedbef2ebc9b10271386e7f85bf) | Sklearn random forest with extended hyperperameters optimized by optuna. Fit on the whole dataset                                                             |
+| team_loyal_hippo_v5_d6020e5c-d553-4262-acfa-cb16ab34cc86.csv | model_v4.pkl   | None                                                                                         | Dask XGBoost simple model with optimization through optuna and rmse combination train 0.9 validation 0.1. RMSE metric on local validation sample: **3846.81** |
 
 To get submission file with desired version, switch to commit (using for example `git reset --hard COMMIT`, where COMMIT is a commit hash), go to `examples` folder and 
 launch script `predict.py` - it will generate prediction dataframe with desired file name (if the model exists).
 
 If there is a need to fit the model first (it might happen if serialized model was too big to fit into 
 git 100 MGb commit limit), launch `fit.py` file and wait until file with serialized models will appear in `models` folder.
-
-TODO:
-1) make plot with sampled data per each flight (probably need to align)
-2) Should I change the sampling to 10 seconds 
-3) Collect the data

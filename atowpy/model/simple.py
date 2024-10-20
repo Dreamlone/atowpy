@@ -1,5 +1,8 @@
 import pickle
+from contextlib import contextmanager
 from pathlib import Path
+
+from dask.dataframe import dd
 from loguru import logger
 
 import numpy as np
@@ -13,7 +16,10 @@ from sklearn.ensemble import RandomForestRegressor
 from sklearn.metrics import mean_absolute_error, mean_absolute_percentage_error
 from sklearn.metrics import root_mean_squared_error
 from sklearn.preprocessing import StandardScaler
+from xgboost import XGBRegressor
 
+from atowpy.dask_wrappers import close_dask_client, convert_into_dask_dataframe, DaskClientWrapper
+from atowpy.model.xgboost_wrappers import DaskXGBRegressor
 from atowpy.paths import get_models_path
 from atowpy.read import read_challenge_set, read_submission_set
 from atowpy.version import MODEL_FILE, ENCODER_FILE, SCALER_FILE
@@ -29,7 +35,9 @@ class SimpleModel:
 
     model_by_name = {"rfr": RandomForestRegressor,
                      "ridge": Ridge,
-                     "knn": KNeighborsRegressor}
+                     "knn": KNeighborsRegressor,
+                     "xgb": XGBRegressor,
+                     "xgb_dask": DaskXGBRegressor}
 
     def __init__(self, model: str = "load", apply_validation: bool = True):
         self.model_name = model
@@ -51,6 +59,7 @@ class SimpleModel:
                                      "aircraft_type", "wtc",
                                      "airline"]
         self.target = "tow"
+        self.features_columns = self.num_features + self.categorical_features
         self.all_columns = self.num_features + self.categorical_features + [self.target]
         self.apply_validation = apply_validation
 
@@ -58,8 +67,109 @@ class SimpleModel:
         self.x_test = None
         self.y_train = None
         self.y_test = None
+        self.dask_handler = None
 
     def fit(self, folder_with_files: Path):
+        if "dask" in self.model_name:
+            self._fit_with_dask(folder_with_files)
+        else:
+            self._fit_with_numpy(folder_with_files)
+
+    def _fit_with_dask(self, folder_with_files: Path):
+
+        def objective(trial):
+            if self.model_name == "xgb_dask":
+                # See https://xgboost.readthedocs.io/en/stable/parameter.html for details
+                params = {"n_estimators": trial.suggest_int('n_estimators', 10, 350),
+                          "booster": trial.suggest_categorical("booster",
+                                                               ["gbtree", "dart"]),
+                          "eta": trial.suggest_float("eta", 0.01, 0.99),
+                          "max_depth": trial.suggest_int("max_depth", 3, 10, step=2),
+                          "gamma": trial.suggest_float("gamma", 0.0, 10.00)}
+            else:
+                raise ValueError(f"Model {self.model_name} is not supported")
+
+            logger.debug(f"Objective function. Current params: {params}")
+            # train, test = self.x_train.random_split([0.6, 0.4], random_state=RANDOM_STATE)
+
+            model = self.model_by_name[self.model_name](**params)
+            output = model.fit(self.x_train[self.features_columns].values, self.x_train[self.target].values,
+                               self.dask_handler)
+            # Predict and calculate
+            rmse_on_validation_set = output['history']['valid']['rmse'][-1]
+            predicted = model.predict(self.x_test[self.features_columns].values, self.dask_handler)
+            rmse_metric = root_mean_squared_error(y_true=self.x_test[self.target].values.compute(),
+                                                  y_pred=predicted.compute())
+            # Combination on metric on validation set and difference between test and validation
+            logger.debug(f"Objective function. Validation RMSE: {rmse_metric:.2f}. "
+                         f"Training: {rmse_on_validation_set:.2f}")
+            return rmse_metric * 0.9 + 0.1 * rmse_on_validation_set
+
+        features_df = self.load_data_for_model_fit(folder_with_files)
+        features_df = self._preprocess_features(features_df)
+        self.encoder = OneHotEncoder(handle_unknown='ignore')
+        categorical_features = self.encoder.fit_transform(
+            np.array(features_df[self.categorical_features])).toarray()
+        self.scaler = StandardScaler()
+        numerical_features = self.scaler.fit_transform(np.array(features_df[self.num_features]))
+
+        # Save result into pandas dataframe
+        all_features = np.hstack([numerical_features, categorical_features])
+        self.features_columns = [f"{i}" for i in range(all_features.shape[-1])]
+        cat_columns = [f"{i}" for i in range(numerical_features.shape[-1], all_features.shape[-1])]
+        df_for_fit = pd.DataFrame(all_features, columns=self.features_columns)
+        df_for_fit["tow"] = np.array(features_df["tow"], dtype=float)
+
+        with self.close_dask_client_after_execution():
+            df_for_fit = convert_into_dask_dataframe(df_for_fit)
+
+            for feature in cat_columns:
+                # Mark columns as categories
+                df_for_fit[feature] = df_for_fit[feature].astype('category')
+                # df_for_fit[feature] = df_for_fit[feature].cat.as_known()
+
+            if self.apply_validation:
+                # There will be validation
+                train_ratio = 0.8
+                test_ratio = round(1 - train_ratio, 1)
+                self.x_train, self.x_test = df_for_fit.random_split([train_ratio, test_ratio],
+                                                                    random_state=RANDOM_STATE)
+            else:
+                # No validation needed
+                self.x_train = df_for_fit
+
+            study = optuna.create_study(direction="minimize",
+                                        study_name="dask model fit")
+            study.optimize(objective, n_trials=10, timeout=3600000)
+            best_trial = study.best_trial
+
+            self.model = self.model_by_name[self.model_name](**best_trial.params)
+            self.model.fit(self.x_train[self.features_columns].values, self.x_train[self.target].values,
+                           self.dask_handler)
+
+            if self.apply_validation:
+                # Validate the model
+                predicted = self.model.predict(self.x_test[self.features_columns].values, self.dask_handler)
+                predicted = predicted.compute()
+                y_test = self.x_test[self.target].values.compute()
+
+                logger.info("--- DASK MODEL VALIDATION ---")
+                logger.debug(f"Validation sample size: {len(y_test)}")
+
+                mae_metric = mean_absolute_error(y_true=y_test, y_pred=predicted)
+                logger.info(f'MAE metric: {mae_metric:.2f}')
+
+                mape_metric = mean_absolute_percentage_error(y_true=y_test,
+                                                             y_pred=predicted) * 100
+                logger.info(f'MAPE metric: {mape_metric:.2f}')
+
+                rmse_metric = root_mean_squared_error(y_true=y_test, y_pred=predicted)
+                logger.info(f'RMSE metric: {rmse_metric:.2f}')
+                logger.info("--- DASK MODEL VALIDATION ---")
+
+        return self.model
+
+    def _fit_with_numpy(self, folder_with_files: Path):
 
         def objective(trial):
             # Split for train and validation
@@ -81,6 +191,10 @@ class SimpleModel:
                                                                  "friedman_mse",
                                                                  "poisson"]),
                           "max_depth": trial.suggest_int("max_depth", 3, 200, step=2)}
+            elif self.model_name == "xgb":
+                params = {"n_estimators": trial.suggest_categorical("n_estimators",
+                                                                    [10, 25, 50, 100]),
+                          "max_depth": trial.suggest_int('max_depth', 10, 1000)}
             elif self.model_name == "ridge":
                 params = {"alpha": trial.suggest_float("alpha", 0, 100.0),
                           "tol": trial.suggest_float("tol", 0.0001, 0.005)}
@@ -123,7 +237,7 @@ class SimpleModel:
             self.y_train = np.array(features_df[self.target])
 
         study = optuna.create_study(direction="minimize",
-                                    study_name="simple model fit")
+                                    study_name="model fit")
         study.optimize(objective, n_trials=50, timeout=3600000)
         best_trial = study.best_trial
 
@@ -165,7 +279,25 @@ class SimpleModel:
         numerical_features = self.scaler.transform(np.array(features_df[self.num_features]))
         all_features = np.hstack([numerical_features, categorical_features])
 
-        predicted = self.model.predict(all_features)
+        if isinstance(self.model, DaskXGBRegressor):
+            # Dask related model
+            self.features_columns = [f"{i}" for i in range(all_features.shape[-1])]
+            cat_columns = [f"{i}" for i in range(numerical_features.shape[-1], all_features.shape[-1])]
+            df_for_predict = pd.DataFrame(all_features, columns=self.features_columns)
+
+            with self.close_dask_client_after_execution():
+                df_for_predict = convert_into_dask_dataframe(df_for_predict)
+
+                for feature in cat_columns:
+                    # Mark columns as categories
+                    df_for_predict[feature] = df_for_predict[feature].astype('category')
+                    # df_for_predict[feature] = df_for_predict[feature].cat.as_known()
+                predicted = self.model.predict(df_for_predict[self.features_columns].values, self.dask_handler)
+                predicted = predicted.compute()
+        else:
+            # Simple numpy-based model
+            predicted = self.model.predict(all_features)
+
         features_df[self.target] = predicted
         logger.debug("Model predict. Prediction generation was successfully finished")
         return features_df
@@ -214,3 +346,11 @@ class SimpleModel:
 
     def load_data_for_submission(self, folder_with_files: Path):
         return read_submission_set(folder_with_files)
+
+    @contextmanager
+    def close_dask_client_after_execution(self):
+        self.dask_handler = DaskClientWrapper()
+        try:
+            yield
+        finally:
+            close_dask_client()

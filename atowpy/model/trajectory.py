@@ -15,6 +15,10 @@ from atowpy.read import read_challenge_set, read_submission_set
 
 
 FEATURES_TO_EXCLUDE = ["flight_id"]
+# Remain only 'altitude', 'groundspeed' variables in the dataset
+FEATURES_BASE_NAMES_TO_REMOVE = ['latitude', 'longitude', 'track', 'vertical_rate',
+                                 'u_component_of_wind', 'v_component_of_wind', 'temperature', 'specific_humidity',
+                                 'track_unwrapped']
 
 
 class TrajectoryModel(SimpleModel):
@@ -33,7 +37,10 @@ class TrajectoryModel(SimpleModel):
 
         # Extend features names
         extracted_names = list(filter(lambda x: x not in FEATURES_TO_EXCLUDE, list(extracted.columns)))
+        for feature in FEATURES_BASE_NAMES_TO_REMOVE:
+            extracted_names = list(filter(lambda x: feature not in x, extracted_names))
         extracted_names.sort()
+        logger.debug(f"Feature to use: {extracted_names}")
         self.num_features.extend(extracted_names)
 
         challenge_set = read_challenge_set(folder_with_files)
@@ -122,7 +129,10 @@ class TrajectoryModel(SimpleModel):
 
         # Extend features names
         extracted_names = list(filter(lambda x: x not in FEATURES_TO_EXCLUDE, list(extracted.columns)))
+        for feature in FEATURES_BASE_NAMES_TO_REMOVE:
+            extracted_names = list(filter(lambda x: feature not in x, extracted_names))
         extracted_names.sort()
+        logger.debug(f"Feature to use: {extracted_names}")
         self.num_features.extend(extracted_names)
 
         df = read_submission_set(folder_with_files)
