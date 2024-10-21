@@ -9,7 +9,7 @@ def download_data_into_local_folder():
     and will not try to re-load already copied files
     """
     loader = DataLoader(get_data_path())
-    loader.download_into_folder()
+    loader.download_into_folder(files_to_process=['final_submission_set.csv'])
 
 
 if __name__ == '__main__':

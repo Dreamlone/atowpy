@@ -140,7 +140,7 @@ class SimpleModel:
 
             study = optuna.create_study(direction="minimize",
                                         study_name="dask model fit")
-            study.optimize(objective, n_trials=10, timeout=3600000)
+            study.optimize(objective, n_trials=20, timeout=3600000)
             best_trial = study.best_trial
 
             self.model = self.model_by_name[self.model_name](**best_trial.params)
