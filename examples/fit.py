@@ -14,7 +14,7 @@ def fit_trajectory_model():
     data_path = get_data_path()
 
     # Fit random forest model
-    model = SimpleModel("xgb_dask", apply_validation=True)
+    model = TrajectoryModel("xgb_dask", apply_validation=True)
     model.fit(data_path)
 
     # Save fitted model

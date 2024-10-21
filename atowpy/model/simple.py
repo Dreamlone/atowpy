@@ -110,8 +110,8 @@ class SimpleModel:
         self.encoder = OneHotEncoder(handle_unknown='ignore')
         categorical_features = self.encoder.fit_transform(
             np.array(features_df[self.categorical_features])).toarray()
-        self.scaler = StandardScaler()
-        numerical_features = self.scaler.fit_transform(np.array(features_df[self.num_features]))
+        # self.scaler = StandardScaler()
+        numerical_features = np.array(features_df[self.num_features])
 
         # Save result into pandas dataframe
         all_features = np.hstack([numerical_features, categorical_features])
@@ -221,8 +221,8 @@ class SimpleModel:
         self.encoder = OneHotEncoder(handle_unknown='ignore')
         categorical_features = self.encoder.fit_transform(
             np.array(features_df[self.categorical_features])).toarray()
-        self.scaler = StandardScaler()
-        numerical_features = self.scaler.fit_transform(np.array(features_df[self.num_features]))
+        # self.scaler = StandardScaler()
+        numerical_features = np.array(features_df[self.num_features])
 
         if self.apply_validation:
             self.x_train, self.x_test, self.y_train, self.y_test = train_test_split(
@@ -312,8 +312,8 @@ class SimpleModel:
         with open(Path(get_models_path(), ENCODER_FILE), "wb") as f:
             pickle.dump(self.encoder, f)
 
-        with open(Path(get_models_path(), SCALER_FILE), "wb") as f:
-            pickle.dump(self.scaler, f)
+        # with open(Path(get_models_path(), SCALER_FILE), "wb") as f:
+        #     pickle.dump(self.scaler, f)
 
         logger.debug("Model was successfully saved.")
 
