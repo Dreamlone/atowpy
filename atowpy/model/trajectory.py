@@ -15,9 +15,9 @@ from atowpy.read import read_challenge_set, read_submission_set
 
 
 FEATURES_TO_EXCLUDE = ["flight_id"]
-# Remain only 'altitude', 'groundspeed' variables in the dataset
-FEATURES_BASE_NAMES_TO_REMOVE = ['u_component_of_wind', 'v_component_of_wind', 'latitude', 'longitude',
-                                 'track', 'vertical_rate',
+# Remain only 'altitude', 'groundspeed', 'u_component_of_wind', 'v_component_of_wind', 'latitude', 'longitude'
+# variables in the dataset
+FEATURES_BASE_NAMES_TO_REMOVE = ['track', 'vertical_rate',
                                  'temperature', 'specific_humidity',
                                  'track_unwrapped']
 
