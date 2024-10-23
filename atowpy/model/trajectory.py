@@ -9,15 +9,16 @@ import contextily as cx
 from scipy.ndimage import gaussian_filter
 
 from atowpy.model.simple import SimpleModel
-from atowpy.paths import results_folder
+from atowpy.paths import results_folder, get_project_path, get_submissions_path
 from atowpy.project import prepare_points_layer
 from atowpy.read import read_challenge_set, read_submission_set
 
 
 FEATURES_TO_EXCLUDE = ["flight_id"]
 # Remain only 'altitude', 'groundspeed' variables in the dataset
-FEATURES_BASE_NAMES_TO_REMOVE = ['latitude', 'longitude', 'track', 'vertical_rate',
-                                 'u_component_of_wind', 'v_component_of_wind', 'temperature', 'specific_humidity',
+FEATURES_BASE_NAMES_TO_REMOVE = ['u_component_of_wind', 'v_component_of_wind', 'latitude', 'longitude',
+                                 'track', 'vertical_rate',
+                                 'temperature', 'specific_humidity',
                                  'track_unwrapped']
 
 
@@ -29,6 +30,11 @@ class TrajectoryModel(SimpleModel):
                  vis: bool = True):
         super().__init__(model, apply_validation)
         self.vis = vis
+
+        # In case if during the prediction features was not extracted for each flight
+        self.was_prediction_data_full: bool = True
+        self.path_to_backup_submission = Path(get_submissions_path(),
+                                              "team_loyal_hippo_v6_d6020e5c-d553-4262-acfa-cb16ab34cc86.csv")
 
     def load_data_for_model_fit(self, folder_with_files: Path):
         extracted = Path(folder_with_files, "extracted_trajectory_features_for_challenge_set.csv")
@@ -123,7 +129,7 @@ class TrajectoryModel(SimpleModel):
         return merged
 
     def load_data_for_submission(self, folder_with_files: Path):
-        extracted = Path(folder_with_files, "extracted_trajectory_features_for_submission_set.csv")
+        extracted = Path(folder_with_files, "extracted_trajectory_features_for_final_submission_set.csv")
         extracted = pd.read_csv(extracted)
         extracted = extracted.drop(columns=["date"])
 
@@ -136,5 +142,18 @@ class TrajectoryModel(SimpleModel):
         self.num_features.extend(extracted_names)
 
         df = read_submission_set(folder_with_files)
+        submission_set_len = len(df)
+        extracted_features_len = len(extracted)
+        if submission_set_len != extracted_features_len:
+            submission_flights = set(df["flight_id"])
+            extracted_flights = set(extracted["flight_id"])
+            uncovered_flights = submission_flights - extracted_flights
+            logger.warning(f"Dataset with extracted features does not contain all the flights. "
+                           f"Submission set length: {submission_set_len}. "
+                           f"Extracted features set length: {extracted_features_len}. "
+                           f"Missed flights: {submission_set_len - extracted_features_len}."
+                           f"Flight indices: {uncovered_flights}")
+            self.was_prediction_data_full = False
+
         merged = df.merge(extracted, on="flight_id")
         return merged

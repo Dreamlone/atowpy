@@ -8,7 +8,7 @@ from loguru import logger
 import numpy as np
 import pandas as pd
 import optuna
-from sklearn.linear_model import LinearRegression, Ridge
+from sklearn.linear_model import Ridge
 from sklearn.model_selection import train_test_split
 from sklearn.neighbors import KNeighborsRegressor
 from sklearn.preprocessing import OneHotEncoder
@@ -69,6 +69,9 @@ class SimpleModel:
         self.y_test = None
         self.dask_handler = None
 
+        self.was_prediction_data_full: bool = True
+        self.path_to_backup_submission = None
+
     def fit(self, folder_with_files: Path):
         if "dask" in self.model_name:
             self._fit_with_dask(folder_with_files)
@@ -80,7 +83,7 @@ class SimpleModel:
         def objective(trial):
             if self.model_name == "xgb_dask":
                 # See https://xgboost.readthedocs.io/en/stable/parameter.html for details
-                params = {"n_estimators": trial.suggest_int('n_estimators', 10, 350),
+                params = {"n_estimators": trial.suggest_int('n_estimators', 10, 800),
                           "booster": trial.suggest_categorical("booster",
                                                                ["gbtree", "dart"]),
                           "eta": trial.suggest_float("eta", 0.01, 0.99),
@@ -103,7 +106,7 @@ class SimpleModel:
             # Combination on metric on validation set and difference between test and validation
             logger.debug(f"Objective function. Validation RMSE: {rmse_metric:.2f}. "
                          f"Training: {rmse_on_validation_set:.2f}")
-            return rmse_metric * 0.9 + 0.1 * rmse_on_validation_set
+            return rmse_metric
 
         features_df = self.load_data_for_model_fit(folder_with_files)
         features_df = self._preprocess_features(features_df)
@@ -140,7 +143,7 @@ class SimpleModel:
 
             study = optuna.create_study(direction="minimize",
                                         study_name="dask model fit")
-            study.optimize(objective, n_trials=20, timeout=3600000)
+            study.optimize(objective, n_trials=30, timeout=3600000)
             best_trial = study.best_trial
 
             self.model = self.model_by_name[self.model_name](**best_trial.params)
@@ -167,6 +170,10 @@ class SimpleModel:
                 logger.info(f'RMSE metric: {rmse_metric:.2f}')
                 logger.info("--- DASK MODEL VALIDATION ---")
 
+            # Fit one more time on all data
+            self.model = self.model_by_name[self.model_name](**best_trial.params)
+            self.model.fit(df_for_fit[self.features_columns].values, df_for_fit[self.target].values,
+                           self.dask_handler)
         return self.model
 
     def _fit_with_numpy(self, folder_with_files: Path):
@@ -276,7 +283,10 @@ class SimpleModel:
 
         logger.debug("Model predict. Starting ...")
         categorical_features = self.encoder.transform(np.array(features_df[self.categorical_features])).toarray()
-        numerical_features = self.scaler.transform(np.array(features_df[self.num_features]))
+        if self.scaler is not None:
+            numerical_features = self.scaler.transform(np.array(features_df[self.num_features]))
+        else:
+            numerical_features = np.array(features_df[self.num_features])
         all_features = np.hstack([numerical_features, categorical_features])
 
         if isinstance(self.model, DaskXGBRegressor):
@@ -299,6 +309,15 @@ class SimpleModel:
             predicted = self.model.predict(all_features)
 
         features_df[self.target] = predicted
+        if self.was_prediction_data_full is False:
+            # Need to replace missing values with predicted values using old model which is not using features
+            # extracted from trajectories
+            backup_predictions = pd.read_csv(self.path_to_backup_submission)
+            backup_predictions = backup_predictions.rename(columns={"tow": "tow_old"})
+            merged_df = backup_predictions.merge(features_df[["flight_id", "tow"]], how="outer", on="flight_id")
+            merged_df['tow'] = merged_df['tow'].fillna(merged_df['tow_old'])
+            return merged_df[["flight_id", "tow"]]
+
         logger.debug("Model predict. Prediction generation was successfully finished")
         return features_df
 
@@ -326,8 +345,10 @@ class SimpleModel:
         with open(Path(get_models_path(), ENCODER_FILE), "rb") as f:
             encoder = pickle.load(f)
 
-        with open(Path(get_models_path(), SCALER_FILE), "rb") as f:
-            scaler = pickle.load(f)
+        scaler = None
+        if Path(get_models_path(), SCALER_FILE).exists():
+            with open(Path(get_models_path(), SCALER_FILE), "rb") as f:
+                scaler = pickle.load(f)
 
         return model, encoder, scaler
 
