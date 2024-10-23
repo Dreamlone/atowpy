@@ -22,7 +22,7 @@ from atowpy.dask_wrappers import close_dask_client, convert_into_dask_dataframe,
 from atowpy.model.xgboost_wrappers import DaskXGBRegressor
 from atowpy.paths import get_models_path
 from atowpy.read import read_challenge_set, read_submission_set
-from atowpy.version import MODEL_FILE, ENCODER_FILE, SCALER_FILE
+from atowpy.version import MODEL_FILE, ENCODER_FILE, SCALER_FILE, VERSION
 
 RANDOM_STATE = 2024
 
@@ -71,6 +71,7 @@ class SimpleModel:
 
         self.was_prediction_data_full: bool = True
         self.path_to_backup_submission = None
+        self.optimization_results = []
 
     def fit(self, folder_with_files: Path):
         if "dask" in self.model_name:
@@ -83,7 +84,7 @@ class SimpleModel:
         def objective(trial):
             if self.model_name == "xgb_dask":
                 # See https://xgboost.readthedocs.io/en/stable/parameter.html for details
-                params = {"n_estimators": trial.suggest_int('n_estimators', 10, 800),
+                params = {"n_estimators": trial.suggest_int('n_estimators', 50, 900),
                           "booster": trial.suggest_categorical("booster",
                                                                ["gbtree", "dart"]),
                           "eta": trial.suggest_float("eta", 0.01, 0.99),
@@ -106,6 +107,13 @@ class SimpleModel:
             # Combination on metric on validation set and difference between test and validation
             logger.debug(f"Objective function. Validation RMSE: {rmse_metric:.2f}. "
                          f"Training: {rmse_on_validation_set:.2f}")
+
+            self.optimization_results.append({"n_estimators": params["n_estimators"],
+                                              "booster": params["booster"],
+                                              "eta": params["eta"],
+                                              "max_depth": params["max_depth"],
+                                              "gamma": params["gamma"],
+                                              "metric": rmse_metric})
             return rmse_metric
 
         features_df = self.load_data_for_model_fit(folder_with_files)
@@ -143,7 +151,10 @@ class SimpleModel:
 
             study = optuna.create_study(direction="minimize",
                                         study_name="dask model fit")
-            study.optimize(objective, n_trials=30, timeout=3600000)
+            study.optimize(objective, n_trials=30, timeout=None)
+            optimization_results = pd.DataFrame(self.optimization_results)
+            optimization_results.to_csv(Path(get_models_path(),
+                                             f"optimization_track_for_model_{VERSION}.csv"), index=False)
             best_trial = study.best_trial
 
             self.model = self.model_by_name[self.model_name](**best_trial.params)
@@ -170,10 +181,11 @@ class SimpleModel:
                 logger.info(f'RMSE metric: {rmse_metric:.2f}')
                 logger.info("--- DASK MODEL VALIDATION ---")
 
-            # Fit one more time on all data
-            self.model = self.model_by_name[self.model_name](**best_trial.params)
-            self.model.fit(df_for_fit[self.features_columns].values, df_for_fit[self.target].values,
-                           self.dask_handler)
+            # Fit one more time on all data TODO - it freezes somehow
+            # self.model = self.model_by_name[self.model_name](**best_trial.params)
+            # self.model.fit(df_for_fit[self.features_columns].values,
+            #                df_for_fit[self.target].values,
+            #                self.dask_handler)
         return self.model
 
     def _fit_with_numpy(self, folder_with_files: Path):
