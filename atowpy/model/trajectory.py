@@ -151,7 +151,7 @@ class TrajectoryModel(SimpleModel):
             logger.warning(f"Dataset with extracted features does not contain all the flights. "
                            f"Submission set length: {submission_set_len}. "
                            f"Extracted features set length: {extracted_features_len}. "
-                           f"Missed flights: {submission_set_len - extracted_features_len}."
+                           f"Missed flights: {submission_set_len - extracted_features_len}. "
                            f"Flight indices: {uncovered_flights}")
             self.was_prediction_data_full = False
 

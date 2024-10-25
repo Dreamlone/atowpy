@@ -84,7 +84,7 @@ class SimpleModel:
         def objective(trial):
             if self.model_name == "xgb_dask":
                 # See https://xgboost.readthedocs.io/en/stable/parameter.html for details
-                params = {"n_estimators": trial.suggest_int('n_estimators', 50, 900),
+                params = {"n_estimators": trial.suggest_int('n_estimators', 800, 1200),
                           "booster": trial.suggest_categorical("booster",
                                                                ["gbtree", "dart"]),
                           "eta": trial.suggest_float("eta", 0.01, 0.99),
@@ -149,13 +149,15 @@ class SimpleModel:
                 # No validation needed
                 self.x_train = df_for_fit
 
-            study = optuna.create_study(direction="minimize",
-                                        study_name="dask model fit")
-            study.optimize(objective, n_trials=30, timeout=None)
-            optimization_results = pd.DataFrame(self.optimization_results)
-            optimization_results.to_csv(Path(get_models_path(),
-                                             f"optimization_track_for_model_{VERSION}.csv"), index=False)
-            best_trial = study.best_trial
+            try:
+                study = optuna.create_study(direction="minimize",
+                                            study_name="dask model fit")
+                study.optimize(objective, n_trials=7, timeout=None)
+                best_trial = study.best_trial
+            finally:
+                optimization_results = pd.DataFrame(self.optimization_results)
+                optimization_results.to_csv(Path(get_models_path(),
+                                                 f"optimization_track_for_model_{VERSION}.csv"), index=False)
 
             self.model = self.model_by_name[self.model_name](**best_trial.params)
             self.model.fit(self.x_train[self.features_columns].values, self.x_train[self.target].values,
