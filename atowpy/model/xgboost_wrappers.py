@@ -40,6 +40,7 @@ class DaskXGBRegressor:
 
     def fit(self, features: Array, target: Array, dask_handler):
         logger.debug(f"DaskXGBRegressor. Start model fitting")
+        logger.debug(f"n_estimators: {self.n_estimators}. max_depth: {self.max_depth}")
 
         x_train, x_test, y_train, y_test = train_test_split(features.compute_chunk_sizes(),
                                                             target.compute_chunk_sizes(),

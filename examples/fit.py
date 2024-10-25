@@ -15,7 +15,8 @@ def fit_trajectory_model():
 
     # Fit random forest model
     model = TrajectoryModel("xgb_dask", apply_validation=True, vis=False)
-    model.fit(data_path)
+    model.fit_one_model(data_path, {"n_estimators": 1087, "booster": "gbtree", "eta": 0.06719124193529334,
+                                           "max_depth": 9, "gamma": 1.9932175141782538})
 
     # Save fitted model
     model.save()

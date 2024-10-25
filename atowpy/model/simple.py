@@ -1,6 +1,7 @@
 import pickle
 from contextlib import contextmanager
 from pathlib import Path
+from typing import Dict
 
 from dask.dataframe import dd
 from loguru import logger
@@ -288,6 +289,71 @@ class SimpleModel:
         rmse_metric = root_mean_squared_error(y_true=y_test, y_pred=predicted)
         logger.info(f'RMSE metric: {rmse_metric:.2f}')
         logger.info("--- MODEL VALIDATION ---")
+
+    def fit_one_model(self, folder_with_files: Path, params: Dict):
+        with self.close_dask_client_after_execution():
+
+            features_df = self.load_data_for_model_fit(folder_with_files)
+            features_df = self._preprocess_features(features_df)
+            self.encoder = OneHotEncoder(handle_unknown='ignore')
+            categorical_features = self.encoder.fit_transform(
+                np.array(features_df[self.categorical_features])).toarray()
+            # self.scaler = StandardScaler()
+            numerical_features = np.array(features_df[self.num_features])
+
+            # Save result into pandas dataframe
+            all_features = np.hstack([numerical_features, categorical_features])
+            self.features_columns = [f"{i}" for i in range(all_features.shape[-1])]
+            cat_columns = [f"{i}" for i in range(numerical_features.shape[-1], all_features.shape[-1])]
+            df_for_fit = pd.DataFrame(all_features, columns=self.features_columns)
+            df_for_fit["tow"] = np.array(features_df["tow"], dtype=float)
+
+            df_for_fit = convert_into_dask_dataframe(df_for_fit)
+
+            for feature in cat_columns:
+                # Mark columns as categories
+                df_for_fit[feature] = df_for_fit[feature].astype('category')
+
+            if self.apply_validation:
+                # There will be validation
+                train_ratio = 0.95
+                test_ratio = round(1 - train_ratio, 2)
+                self.x_train, self.x_test = df_for_fit.random_split([train_ratio, test_ratio],
+                                                                    random_state=RANDOM_STATE)
+            else:
+                # No validation needed
+                self.x_train = df_for_fit
+
+            self.model = self.model_by_name[self.model_name](**params)
+            self.model.fit(self.x_train[self.features_columns].values, self.x_train[self.target].values,
+                           self.dask_handler)
+
+            if self.apply_validation:
+                # Validate the model
+                predicted = self.model.predict(self.x_test[self.features_columns].values, self.dask_handler)
+                predicted = predicted.compute()
+                y_test = self.x_test[self.target].values.compute()
+
+                logger.info("--- DASK MODEL VALIDATION ---")
+                logger.debug(f"Validation sample size: {len(y_test)}")
+
+                mae_metric = mean_absolute_error(y_true=y_test, y_pred=predicted)
+                logger.info(f'MAE metric: {mae_metric:.2f}')
+
+                mape_metric = mean_absolute_percentage_error(y_true=y_test,
+                                                             y_pred=predicted) * 100
+                logger.info(f'MAPE metric: {mape_metric:.2f}')
+
+                rmse_metric = root_mean_squared_error(y_true=y_test, y_pred=predicted)
+                logger.info(f'RMSE metric: {rmse_metric:.2f}')
+                logger.info("--- DASK MODEL VALIDATION ---")
+
+            # Fit one more time on all data TODO - it freezes somehow
+            # self.model = self.model_by_name[self.model_name](**best_trial.params)
+            # self.model.fit(df_for_fit[self.features_columns].values,
+            #                df_for_fit[self.target].values,
+            #                self.dask_handler)
+        return self.model
 
     def predict(self, folder_with_files: Path):
         logger.debug("Features preprocessing for predict. Starting ...")
