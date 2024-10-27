@@ -57,13 +57,13 @@ TODO: add here detailed description of final most accurate solution
 4. Use the following command (for Windows): 
 
 ```Bash
-./mc.exe cp .\submissions\team_loyal_hippo_v10_d6020e5c-d553-4262-acfa-cb16ab34cc86.csv dc24/submissions/team_loyal_hippo_v10_d6020e5c-d553-4262-acfa-cb16ab34cc86.csv
+./mc.exe cp .\submissions\team_loyal_hippo_v12_d6020e5c-d553-4262-acfa-cb16ab34cc86.csv dc24/submissions/team_loyal_hippo_v12_d6020e5c-d553-4262-acfa-cb16ab34cc86.csv
 ```
 
 Alternative command for Ubuntu:
 
 ```Bash
-mc cp ./submissions/team_loyal_hippo_v10_d6020e5c-d553-4262-acfa-cb16ab34cc86.csv dc24/submissions/team_loyal_hippo_v10_d6020e5c-d553-4262-acfa-cb16ab34cc86.csv
+mc cp ./submissions/team_loyal_hippo_v12_d6020e5c-d553-4262-acfa-cb16ab34cc86.csv dc24/submissions/team_loyal_hippo_v12_d6020e5c-d553-4262-acfa-cb16ab34cc86.csv
 ```
 
 After that according to th information from [data challenge page](https://ansperformance.eu/study/data-challenge/data.html#ranking)

@@ -7,19 +7,20 @@ import pandas as pd
 from matplotlib import pyplot as plt
 import contextily as cx
 from scipy.ndimage import gaussian_filter
+from sklearn.decomposition import PCA
 
 from atowpy.model.simple import SimpleModel
-from atowpy.paths import results_folder, get_project_path, get_submissions_path
+from atowpy.paths import results_folder, get_project_path, get_submissions_path, get_models_path
 from atowpy.project import prepare_points_layer
 from atowpy.read import read_challenge_set, read_submission_set
-
+from atowpy.version import VERSION
 
 FEATURES_TO_EXCLUDE = ["flight_id"]
 # Remain only 'altitude', 'groundspeed', 'u_component_of_wind', 'v_component_of_wind', 'latitude', 'longitude',
 # 'vertical_rate' variables in the dataset 'track_unwrapped'
-# 'track', 'u_component_of_wind', 'v_component_of_wind'
-#                                  'temperature', 'specific_humidity',
+# 'track', 'u_component_of_wind', 'v_component_of_wind', 'temperature', 'specific_humidity',
 FEATURES_BASE_NAMES_TO_REMOVE = ['track_unwrapped']
+COMPONENTS = 4
 
 
 class TrajectoryModel(SimpleModel):
@@ -34,23 +35,51 @@ class TrajectoryModel(SimpleModel):
         # In case if during the prediction features was not extracted for each flight
         self.was_prediction_data_full: bool = True
         self.path_to_backup_submission = Path(get_submissions_path(),
-                                              "team_loyal_hippo_v6_d6020e5c-d553-4262-acfa-cb16ab34cc86.csv")
+                                              "team_loyal_hippo_v10_d6020e5c-d553-4262-acfa-cb16ab34cc86.csv")
 
     def load_data_for_model_fit(self, folder_with_files: Path):
         extracted = Path(folder_with_files, "extracted_trajectory_features_for_challenge_set.csv")
-        extracted = pd.read_csv(extracted, nrows=50000)
+        extracted = pd.read_csv(extracted, nrows=60000)
         extracted = extracted.drop(columns=["date"])
+        extracted = extracted.dropna()
 
         # Extend features names
         extracted_names = list(filter(lambda x: x not in FEATURES_TO_EXCLUDE, list(extracted.columns)))
-        for feature in FEATURES_BASE_NAMES_TO_REMOVE:
-            extracted_names = list(filter(lambda x: feature not in x, extracted_names))
-        extracted_names.sort()
-        logger.debug(f"Feature to use: {extracted_names}")
-        self.num_features.extend(extracted_names)
+        altitude_group = list(filter(lambda x: "altitude" in x, extracted_names))
+        updated_features_names = []
+
+        # Filter all negative values
+        for altitude_column in altitude_group[:3]:
+            extracted = extracted[extracted[altitude_column] > 0]
+            extracted = extracted[extracted[altitude_column] < 10000]
+
+        stack = []
+        for feature_base_name in ["altitude", "groundspeed", "u_component_of_wind", "v_component_of_wind",
+                                  "vertical_rate", 'latitude', 'longitude', 'temperature', 'specific_humidity']:
+            features_group = list(filter(lambda x: feature_base_name in x, extracted_names))
+            lag_array = np.array(extracted[features_group])
+
+            # Reproject it
+            pca = PCA(n_components=COMPONENTS)
+            transformed = pca.fit_transform(lag_array)
+
+            with open(Path(get_models_path(), f"pca_{feature_base_name}_v{VERSION}"), "wb") as f:
+                pickle.dump(pca, f)
+
+            stack.append(transformed)
+            new_local_features = [f"{feature_base_name}_{i}" for i in range(COMPONENTS)]
+            updated_features_names.extend(new_local_features)
+
+        stack = np.hstack(stack)
+        extracted_new_df = pd.DataFrame(stack, columns=updated_features_names)
+        # extracted_new_df["starting_index"] = np.array(extracted["starting_index"])
+        # updated_features_names.append("starting_index")
+        extracted_new_df["flight_id"] = np.array(extracted["flight_id"])
+        logger.debug(f"Feature to use: {updated_features_names}")
+        self.num_features.extend(updated_features_names)
 
         challenge_set = read_challenge_set(folder_with_files)
-        merged = challenge_set.merge(extracted, on="flight_id")
+        merged = challenge_set.merge(extracted_new_df, on="flight_id")
         merged_cols = list(merged.columns)
         altitude_names = list(filter(lambda x: "altitude" in x, merged_cols))
         groundspeed_names = list(filter(lambda x: "groundspeed" in x, merged_cols))
@@ -129,35 +158,61 @@ class TrajectoryModel(SimpleModel):
 
         merged = merged.dropna()
         logger.debug(f"Data for fitting was loaded. Rows number: {len(merged)}")
+        logger.info(f"Latest datetime in the merged dataframe for fit: {max(merged['date'])}")
         return merged
 
     def load_data_for_submission(self, folder_with_files: Path):
         extracted = Path(folder_with_files, "extracted_trajectory_features_for_final_submission_set.csv")
-        extracted = pd.read_csv(extracted)
+        extracted = pd.read_csv(extracted, nrows=20000)
         extracted = extracted.drop(columns=["date"])
+        extracted = extracted.dropna()
 
         # Extend features names
         extracted_names = list(filter(lambda x: x not in FEATURES_TO_EXCLUDE, list(extracted.columns)))
-        for feature in FEATURES_BASE_NAMES_TO_REMOVE:
-            extracted_names = list(filter(lambda x: feature not in x, extracted_names))
-        extracted_names.sort()
-        logger.debug(f"Feature to use: {extracted_names}")
-        self.num_features.extend(extracted_names)
+        altitude_group = list(filter(lambda x: "altitude" in x, extracted_names))
+        updated_features_names = []
+
+        # Filter all negative values
+        for altitude_column in altitude_group[:3]:
+            extracted = extracted[extracted[altitude_column] > 0]
+            extracted = extracted[extracted[altitude_column] < 10000]
+
+        stack = []
+        for feature_base_name in ["altitude", "groundspeed", "u_component_of_wind", "v_component_of_wind",
+                                  "vertical_rate", 'latitude', 'longitude', 'temperature', 'specific_humidity']:
+            features_group = list(filter(lambda x: feature_base_name in x, extracted_names))
+            lag_array = np.array(extracted[features_group])
+
+            with open(Path(get_models_path(), f"pca_{feature_base_name}_v{VERSION}"), "rb") as f:
+                pca = pickle.load(f)
+
+            transformed = pca.transform(lag_array)
+            stack.append(transformed)
+            new_local_features = [f"{feature_base_name}_{i}" for i in range(COMPONENTS)]
+            updated_features_names.extend(new_local_features)
+
+        stack = np.hstack(stack)
+        extracted_new_df = pd.DataFrame(stack, columns=updated_features_names)
+        # extracted_new_df["starting_index"] = np.array(extracted["starting_index"])
+        # updated_features_names.append("starting_index")
+        extracted_new_df["flight_id"] = np.array(extracted["flight_id"])
+        logger.debug(f"Feature to use: {updated_features_names}")
+        self.num_features.extend(updated_features_names)
 
         df = read_submission_set(folder_with_files)
         submission_set_len = len(df)
-        extracted_features_len = len(extracted)
+        extracted_features_len = len(extracted_new_df)
         if submission_set_len != extracted_features_len:
             submission_flights = set(df["flight_id"])
-            extracted_flights = set(extracted["flight_id"])
+            extracted_flights = set(extracted_new_df["flight_id"])
             uncovered_flights = submission_flights - extracted_flights
             logger.warning(f"Dataset with extracted features does not contain all the flights. "
                            f"Submission set length: {submission_set_len}. "
                            f"Extracted features set length: {extracted_features_len}. "
-                           f"Missed flights: {submission_set_len - extracted_features_len}. "
-                           f"Flight indices: {uncovered_flights}")
+                           f"Missed flights: {submission_set_len - extracted_features_len}.")
             self.was_prediction_data_full = False
 
-        merged = df.merge(extracted, on="flight_id")
+        merged = df.merge(extracted_new_df, on="flight_id")
         logger.debug(f"Data for submission was loaded. Rows number: {len(merged)}")
+        logger.info(f"Latest datetime in the merged dataframe for predict: {max(merged['date'])}")
         return merged

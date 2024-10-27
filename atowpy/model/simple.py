@@ -59,8 +59,7 @@ class SimpleModel:
         self.num_features = ["actual_offblock_hour", "arrival_hour",
                              "flight_duration", "taxiout_time", "flown_distance"]
         self.categorical_features = ["month", "day_of_week",
-                                     "aircraft_type", "wtc",
-                                     "airline"]
+                                     "aircraft_type", "ades", "adep"]
         self.target = "tow"
         self.features_columns = self.num_features + self.categorical_features
         self.all_columns = self.num_features + self.categorical_features + [self.target]
@@ -87,9 +86,9 @@ class SimpleModel:
         def objective(trial):
             if self.model_name == "xgb_dask":
                 # See https://xgboost.readthedocs.io/en/stable/parameter.html for details
-                params = {"n_estimators": trial.suggest_int('n_estimators', 50, 450),
-                          # "booster": trial.suggest_categorical("booster",
-                          #                                      ["gbtree", "dart"]),
+                params = {"n_estimators": trial.suggest_int('n_estimators', 50, 750),
+                          "booster": trial.suggest_categorical("booster",
+                                                               ["gbtree", "dart"]),
                           "eta": trial.suggest_float("eta", 0.01, 0.99),
                           "max_depth": trial.suggest_int("max_depth", 3, 10, step=2),
                           "gamma": trial.suggest_float("gamma", 0.0, 10.00)}
@@ -112,7 +111,7 @@ class SimpleModel:
                          f"Training: {rmse_on_validation_set:.2f}")
 
             self.optimization_results.append({"n_estimators": params["n_estimators"],
-                                              # "booster": params["booster"],
+                                              "booster": params["booster"],
                                               "eta": params["eta"],
                                               "max_depth": params["max_depth"],
                                               "gamma": params["gamma"],
@@ -129,9 +128,7 @@ class SimpleModel:
 
         # Save result into pandas dataframe
         all_features = np.hstack([numerical_features, categorical_features])
-
-        logger.debug(f"Start fitting PCA")
-        logger.debug(f"PCA successfully applied. Features numbers: {all_features.shape[-1]}")
+        logger.debug(f"Features numbers: {all_features.shape[-1]}")
 
         self.features_columns = [f"{i}" for i in range(all_features.shape[-1])]
         # cat_columns = [f"{i}" for i in range(numerical_features.shape[-1], all_features.shape[-1])]
