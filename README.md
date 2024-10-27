@@ -97,7 +97,7 @@ Table 1. Model versions and corresponding submissions ([markdown_tables online g
 | team_loyal_hippo_v7_d6020e5c-d553-4262-acfa-cb16ab34cc86.csv   | model_v7.pkl   | [0243f](https://github.com/Dreamlone/atowpy/commit/0243fe1149c5fdd5df5f5cc7f4e5b051c4fd2908) | Dask XGBoost trajectory models with optuna and trajectory features first 30 values with 3s sampling. Used trajectory features are altitude and groundspeed. RMSE metric on local validation sample: **3459**                                                                             | 3452.92                 |
 | team_loyal_hippo_v8_d6020e5c-d553-4262-acfa-cb16ab34cc86.csv   | model_v8.pkl   | [5d3ab](https://github.com/Dreamlone/atowpy/commit/5d3ab56b22f9ac9546d75fe71e8a9d6688c08d32) | Dask XGBoost trajectory models with optuna and trajectory features first 30 values with 3s sampling. Used trajectory features are: altitude, groundspeed, u_component_of_wind, v_component_of_wind, latitude, longitude. RMSE metric on local validation sample: **3234**                | 3215.64                 |
 | team_loyal_hippo_v9_d6020e5c-d553-4262-acfa-cb16ab34cc86.csv   | model_v9.pkl   | [f541b](https://github.com/Dreamlone/atowpy/commit/f541bccc20fa821eb1c2baa91fb600b9fd8226c8) | Dask XGBoost trajectory models with optuna and trajectory features first 30 values with 3s sampling. Used trajectory features are: altitude, groundspeed, u_component_of_wind, v_component_of_wind, latitude, longitude, vertical_rate. RMSE metric on local validation sample: **3083** | 3067.16                 |
-| team_loyal_hippo_v10_d6020e5c-d553-4262-acfa-cb16ab34cc86.csv  | model_v10.pkl  | [33630](https://github.com/Dreamlone/atowpy/commit/3363048656f920af8f96572d6d4a9c6c421ee101) | Dask XGBoost trajectory model with hyperparameters and features from model v9 but fitted on a bigger dataset (95% of data)                                                                                                                                                               | -                       |
+| team_loyal_hippo_v10_d6020e5c-d553-4262-acfa-cb16ab34cc86.csv  | model_v10.pkl  | [33630](https://github.com/Dreamlone/atowpy/commit/3363048656f920af8f96572d6d4a9c6c421ee101) | Dask XGBoost trajectory model with hyperparameters and features from model v9 but fitted on a bigger dataset (95% of data)                                                                                                                                                               | 3029.57                 |
 
 To get submission file with desired version, switch to commit (using for example `git reset --hard COMMIT`, where COMMIT is a commit hash), go to `examples` folder and 
 launch script `predict.py` - it will generate prediction dataframe with desired file name (if the model exists).
@@ -107,3 +107,15 @@ git 100 MGb commit limit), launch `fit.py` file and wait until file with seriali
 
 Note: If the model uses trajectory features, they should be extracted into csv file before model fit and before model predict - this extraction 
 can be very time-consuming (several days) if the computer is not powerful enough.
+
+[23:48:05] [49]	valid-rmse:4117.37758
+2024-10-25 23:48:25.692 | INFO     | atowpy.model.simple:fit_one_model:341 - MAE metric: 2953.91
+2024-10-25 23:48:25.695 | INFO     | atowpy.model.simple:fit_one_model:345 - MAPE metric: 4.14
+2024-10-25 23:48:25.696 | INFO     | atowpy.model.simple:fit_one_model:348 - RMSE metric: 4368.48
+
+[23:54:16] [49]	valid-rmse:4117.37758
+2024-10-25 23:54:36.641 | INFO     | atowpy.model.simple:fit_one_model:337 - --- DASK MODEL VALIDATION ---
+2024-10-25 23:54:36.641 | DEBUG    | atowpy.model.simple:fit_one_model:338 - Validation sample size: 110736
+2024-10-25 23:54:36.643 | INFO     | atowpy.model.simple:fit_one_model:341 - MAE metric: 2953.91
+2024-10-25 23:54:36.644 | INFO     | atowpy.model.simple:fit_one_model:345 - MAPE metric: 4.14
+2024-10-25 23:54:36.645 | INFO     | atowpy.model.simple:fit_one_model:348 - RMSE metric: 4368.48

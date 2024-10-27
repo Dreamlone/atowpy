@@ -9,6 +9,7 @@ from loguru import logger
 import numpy as np
 import pandas as pd
 import optuna
+from sklearn.decomposition import PCA
 from sklearn.linear_model import Ridge
 from sklearn.model_selection import train_test_split
 from sklearn.neighbors import KNeighborsRegressor
@@ -23,7 +24,7 @@ from atowpy.dask_wrappers import close_dask_client, convert_into_dask_dataframe,
 from atowpy.model.xgboost_wrappers import DaskXGBRegressor
 from atowpy.paths import get_models_path
 from atowpy.read import read_challenge_set, read_submission_set
-from atowpy.version import MODEL_FILE, ENCODER_FILE, SCALER_FILE, VERSION
+from atowpy.version import MODEL_FILE, ENCODER_FILE, SCALER_FILE, VERSION, PCA_FILE
 
 RANDOM_STATE = 2024
 
@@ -44,7 +45,7 @@ class SimpleModel:
         self.model_name = model
         if model == "load":
             # Path to the binary file passed - load it
-            self.model, self.encoder, self.scaler = self.load()
+            self.model, self.encoder, self.scaler, self.pca = self.load()
             logger.info("Simple model. Core model was successfully loaded from "
                         "file")
         else:
@@ -52,6 +53,7 @@ class SimpleModel:
             self.model = self.model_by_name[model]()
             self.encoder = None
             self.scaler = None
+            self.pca = None
             logger.info("Simple model. Core model was successfully initialized")
 
         self.num_features = ["actual_offblock_hour", "arrival_hour",
@@ -85,9 +87,9 @@ class SimpleModel:
         def objective(trial):
             if self.model_name == "xgb_dask":
                 # See https://xgboost.readthedocs.io/en/stable/parameter.html for details
-                params = {"n_estimators": trial.suggest_int('n_estimators', 800, 1200),
-                          "booster": trial.suggest_categorical("booster",
-                                                               ["gbtree", "dart"]),
+                params = {"n_estimators": trial.suggest_int('n_estimators', 50, 450),
+                          # "booster": trial.suggest_categorical("booster",
+                          #                                      ["gbtree", "dart"]),
                           "eta": trial.suggest_float("eta", 0.01, 0.99),
                           "max_depth": trial.suggest_int("max_depth", 3, 10, step=2),
                           "gamma": trial.suggest_float("gamma", 0.0, 10.00)}
@@ -110,35 +112,39 @@ class SimpleModel:
                          f"Training: {rmse_on_validation_set:.2f}")
 
             self.optimization_results.append({"n_estimators": params["n_estimators"],
-                                              "booster": params["booster"],
+                                              # "booster": params["booster"],
                                               "eta": params["eta"],
                                               "max_depth": params["max_depth"],
                                               "gamma": params["gamma"],
-                                              "metric": rmse_metric})
+                                              "metric": rmse_metric,
+                                              "validation_metric": rmse_on_validation_set})
             return rmse_metric
 
         features_df = self.load_data_for_model_fit(folder_with_files)
         features_df = self._preprocess_features(features_df)
         self.encoder = OneHotEncoder(handle_unknown='ignore')
-        categorical_features = self.encoder.fit_transform(
-            np.array(features_df[self.categorical_features])).toarray()
+        categorical_features = self.encoder.fit_transform(np.array(features_df[self.categorical_features])).toarray()
         # self.scaler = StandardScaler()
         numerical_features = np.array(features_df[self.num_features])
 
         # Save result into pandas dataframe
         all_features = np.hstack([numerical_features, categorical_features])
+
+        logger.debug(f"Start fitting PCA")
+        logger.debug(f"PCA successfully applied. Features numbers: {all_features.shape[-1]}")
+
         self.features_columns = [f"{i}" for i in range(all_features.shape[-1])]
-        cat_columns = [f"{i}" for i in range(numerical_features.shape[-1], all_features.shape[-1])]
+        # cat_columns = [f"{i}" for i in range(numerical_features.shape[-1], all_features.shape[-1])]
         df_for_fit = pd.DataFrame(all_features, columns=self.features_columns)
         df_for_fit["tow"] = np.array(features_df["tow"], dtype=float)
 
         with self.close_dask_client_after_execution():
             df_for_fit = convert_into_dask_dataframe(df_for_fit)
 
-            for feature in cat_columns:
-                # Mark columns as categories
-                df_for_fit[feature] = df_for_fit[feature].astype('category')
-                # df_for_fit[feature] = df_for_fit[feature].cat.as_known()
+            # for feature in cat_columns:
+            #     # Mark columns as categories
+            #     df_for_fit[feature] = df_for_fit[feature].astype('category')
+            #     # df_for_fit[feature] = df_for_fit[feature].cat.as_known()
 
             if self.apply_validation:
                 # There will be validation
@@ -153,7 +159,7 @@ class SimpleModel:
             try:
                 study = optuna.create_study(direction="minimize",
                                             study_name="dask model fit")
-                study.optimize(objective, n_trials=7, timeout=None)
+                study.optimize(objective, n_trials=30, timeout=None)
                 best_trial = study.best_trial
             finally:
                 optimization_results = pd.DataFrame(self.optimization_results)
@@ -243,7 +249,7 @@ class SimpleModel:
         self.encoder = OneHotEncoder(handle_unknown='ignore')
         categorical_features = self.encoder.fit_transform(
             np.array(features_df[self.categorical_features])).toarray()
-        # self.scaler = StandardScaler()
+        self.scaler = StandardScaler()
         numerical_features = np.array(features_df[self.num_features])
 
         if self.apply_validation:
@@ -260,7 +266,7 @@ class SimpleModel:
 
         study = optuna.create_study(direction="minimize",
                                     study_name="model fit")
-        study.optimize(objective, n_trials=50, timeout=3600000)
+        study.optimize(objective, n_trials=30, timeout=None)
         best_trial = study.best_trial
 
         # Re-create the model
@@ -369,19 +375,22 @@ class SimpleModel:
             numerical_features = np.array(features_df[self.num_features])
         all_features = np.hstack([numerical_features, categorical_features])
 
+        if self.pca is not None:
+            all_features = self.pca.fit_transform(all_features)
+
         if isinstance(self.model, DaskXGBRegressor):
             # Dask related model
             self.features_columns = [f"{i}" for i in range(all_features.shape[-1])]
-            cat_columns = [f"{i}" for i in range(numerical_features.shape[-1], all_features.shape[-1])]
+            # cat_columns = [f"{i}" for i in range(numerical_features.shape[-1], all_features.shape[-1])]
             df_for_predict = pd.DataFrame(all_features, columns=self.features_columns)
 
             with self.close_dask_client_after_execution():
                 df_for_predict = convert_into_dask_dataframe(df_for_predict)
 
-                for feature in cat_columns:
-                    # Mark columns as categories
-                    df_for_predict[feature] = df_for_predict[feature].astype('category')
-                    # df_for_predict[feature] = df_for_predict[feature].cat.as_known()
+                # for feature in cat_columns:
+                #     # Mark columns as categories
+                #     df_for_predict[feature] = df_for_predict[feature].astype('category')
+                #     # df_for_predict[feature] = df_for_predict[feature].cat.as_known()
                 predicted = self.model.predict(df_for_predict[self.features_columns].values, self.dask_handler)
                 predicted = predicted.compute()
         else:
@@ -411,9 +420,13 @@ class SimpleModel:
         with open(Path(get_models_path(), ENCODER_FILE), "wb") as f:
             pickle.dump(self.encoder, f)
 
-        # with open(Path(get_models_path(), SCALER_FILE), "wb") as f:
-        #     pickle.dump(self.scaler, f)
+        if self.scaler is not None:
+            with open(Path(get_models_path(), SCALER_FILE), "wb") as f:
+                pickle.dump(self.scaler, f)
 
+        if self.pca is not None:
+            with open(Path(get_models_path(), PCA_FILE), "wb") as f:
+                pickle.dump(self.pca, f)
         logger.debug("Model was successfully saved.")
 
     @staticmethod
@@ -430,7 +443,12 @@ class SimpleModel:
             with open(Path(get_models_path(), SCALER_FILE), "rb") as f:
                 scaler = pickle.load(f)
 
-        return model, encoder, scaler
+        pca = None
+        if Path(get_models_path(), PCA_FILE).exists():
+            with open(Path(get_models_path(), PCA_FILE), "rb") as f:
+                pca = pickle.load(f)
+
+        return model, encoder, scaler, pca
 
     @staticmethod
     def _preprocess_features(features_df: pd.DataFrame):
@@ -439,6 +457,7 @@ class SimpleModel:
         features_df["actual_offblock_hour"] = features_df["actual_offblock_time"].dt.hour
         features_df["arrival_hour"] = features_df["arrival_time"].dt.hour
 
+        features_df['route'] = features_df[['adep', 'ades']].agg('-'.join, axis=1)
         features_df = features_df.drop(columns=["date"])
         return features_df
 

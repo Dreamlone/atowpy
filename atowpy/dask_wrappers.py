@@ -72,14 +72,14 @@ def convert_into_dask_dataframe(table):
         return table
 
     elif isinstance(table, List):
-        partition_size = 400000
+        partition_size = 50000
 
         # Convert list with recordings (dictionaries) into Bag and then into dataframe
         table = db.from_sequence(table, partition_size=partition_size)
         table = table.to_dataframe()
         return table
     elif type(table) is pd.DataFrame:
-        partition_size = 400000
+        partition_size = 50000
 
         table = dd.from_pandas(table, chunksize=partition_size)
         return table

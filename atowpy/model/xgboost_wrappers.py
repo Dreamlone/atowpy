@@ -40,7 +40,7 @@ class DaskXGBRegressor:
 
     def fit(self, features: Array, target: Array, dask_handler):
         logger.debug(f"DaskXGBRegressor. Start model fitting")
-        logger.debug(f"n_estimators: {self.n_estimators}. max_depth: {self.max_depth}")
+        logger.debug(f"n_estimators: {self.n_estimators}. max_depth: {self.max_depth}. booster: {self.booster}")
 
         x_train, x_test, y_train, y_test = train_test_split(features.compute_chunk_sizes(),
                                                             target.compute_chunk_sizes(),
@@ -66,5 +66,11 @@ class DaskXGBRegressor:
 
     def predict(self, features: Array, dask_handler):
         """ Generate predict on new data """
-        prediction = xgb.dask.predict(dask_handler.client, self.output, features)
+        if self.booster == "dart":
+            # Fix according to
+            # https://xgboost.readthedocs.io/en/stable/parameter.html#additional-parameters-for-dart-booster-booster-dart
+            iteration_range = (0, self.n_estimators)
+            prediction = xgb.dask.predict(dask_handler.client, self.output, features, iteration_range=iteration_range)
+        else:
+            prediction = xgb.dask.predict(dask_handler.client, self.output, features)
         return prediction

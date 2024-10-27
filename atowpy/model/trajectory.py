@@ -16,10 +16,10 @@ from atowpy.read import read_challenge_set, read_submission_set
 
 FEATURES_TO_EXCLUDE = ["flight_id"]
 # Remain only 'altitude', 'groundspeed', 'u_component_of_wind', 'v_component_of_wind', 'latitude', 'longitude',
-# 'vertical_rate' variables in the dataset
-FEATURES_BASE_NAMES_TO_REMOVE = ['track',
-                                 'temperature', 'specific_humidity',
-                                 'track_unwrapped']
+# 'vertical_rate' variables in the dataset 'track_unwrapped'
+# 'track', 'u_component_of_wind', 'v_component_of_wind'
+#                                  'temperature', 'specific_humidity',
+FEATURES_BASE_NAMES_TO_REMOVE = ['track_unwrapped']
 
 
 class TrajectoryModel(SimpleModel):
@@ -38,7 +38,7 @@ class TrajectoryModel(SimpleModel):
 
     def load_data_for_model_fit(self, folder_with_files: Path):
         extracted = Path(folder_with_files, "extracted_trajectory_features_for_challenge_set.csv")
-        extracted = pd.read_csv(extracted)
+        extracted = pd.read_csv(extracted, nrows=50000)
         extracted = extracted.drop(columns=["date"])
 
         # Extend features names
@@ -54,7 +54,7 @@ class TrajectoryModel(SimpleModel):
         merged_cols = list(merged.columns)
         altitude_names = list(filter(lambda x: "altitude" in x, merged_cols))
         groundspeed_names = list(filter(lambda x: "groundspeed" in x, merged_cols))
-        track_names = list(filter(lambda x: "track_lag" in x, merged_cols))
+        vertical_rate_names = list(filter(lambda x: "vertical_rate" in x, merged_cols))
         lats = list(filter(lambda x: "latitude" in x, merged_cols))
         lons = list(filter(lambda x: "longitude" in x, merged_cols))
 
@@ -101,8 +101,8 @@ class TrajectoryModel(SimpleModel):
                                         fontsize=8)
                 axs[ax_id, 1].set_ylim(0, 400)
                 axs[ax_id, 1].grid(True)
-                axs[ax_id, 2].plot(np.array(row[track_names]), c='red')
-                axs[ax_id, 2].set_title(f"Track for flight {row.name_adep} - {row.name_ades}.",
+                axs[ax_id, 2].plot(np.array(row[vertical_rate_names]), c='red')
+                axs[ax_id, 2].set_title(f"Vertical rate for flight {row.name_adep} - {row.name_ades}.",
                                         fontsize=8)
                 axs[ax_id, 2].grid(True)
 
@@ -126,6 +126,9 @@ class TrajectoryModel(SimpleModel):
                 cx.add_basemap(ax, crs=df_with_coordinates.crs, source=cx.providers.CartoDB.Voyager)
                 ax.set_title(f"TOW {row.tow}", fontsize=10)
                 ax_id += 1
+
+        merged = merged.dropna()
+        logger.debug(f"Data for fitting was loaded. Rows number: {len(merged)}")
         return merged
 
     def load_data_for_submission(self, folder_with_files: Path):
@@ -156,4 +159,5 @@ class TrajectoryModel(SimpleModel):
             self.was_prediction_data_full = False
 
         merged = df.merge(extracted, on="flight_id")
+        logger.debug(f"Data for submission was loaded. Rows number: {len(merged)}")
         return merged
