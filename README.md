@@ -45,7 +45,46 @@ In `atowpy/version.py` file there is an information about version of the reposit
 
 ### Final solution description
 
-TODO: add here detailed description of final most accurate solution
+The best produced model according to leaderboard was version 10. 
+Thus, here is described this version. To launch model prediction 
+there is a need to run:
+
+* `preparations_for_fitting.py` - script will extract features from trajectories for model
+* `predict.py` - generate predictions
+
+Model uses set of simple features (provided in "challenge_set.csv"): 
+
+* `actual_offblock_hour` - numerical
+* `arrival_hour` - numerical
+* `flight_duration` - numerical
+* `taxiout_time` - numerical
+* `flown_distance` - numerical
+* `month` - categorical
+* `day_of_week` - categorical
+* `aircraft_type` - categorical
+* `wtc` - categorical
+* `airline` - categorical
+
+And also trajectory-based (extracted from parquet files): 
+
+* `altitude` - numerical 
+* `groundspeed` - numerical
+* `u_component_of_wind` - numerical
+* `v_component_of_wind` - numerical
+* `latitude` - numerical
+* `longitude` - numerical
+* `vertical_rate` - numerical
+
+For each flight_id, feature extraction was 
+performed according to the following principle:
+
+* Sampling - 3 seconds. So time series is consist of 3-seconds intervals 
+* Time series execution started only when `altitude` difference between two neighboring time indices if bigger than 10
+* Take first 30 values for each variable. Example: first 30 values of `altitude`, first 30 values of `groundspeed`
+
+Thus, each variable extracted from parquet file for flight is represented as 30 columns (30 lags) - see picture below
+
+![extracted_features_1.png](exploration_plots/extracted_features_1.png)
 
 ## Competition
 

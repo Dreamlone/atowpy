@@ -3,13 +3,11 @@ from contextlib import contextmanager
 from pathlib import Path
 from typing import Dict
 
-from dask.dataframe import dd
 from loguru import logger
 
 import numpy as np
 import pandas as pd
 import optuna
-from sklearn.decomposition import PCA
 from sklearn.linear_model import Ridge
 from sklearn.model_selection import train_test_split
 from sklearn.neighbors import KNeighborsRegressor
@@ -57,9 +55,11 @@ class SimpleModel:
             logger.info("Simple model. Core model was successfully initialized")
 
         self.num_features = ["actual_offblock_hour", "arrival_hour",
-                             "flight_duration", "taxiout_time", "flown_distance"]
+                             "flight_duration", "taxiout_time",
+                             "flown_distance"]
         self.categorical_features = ["month", "day_of_week",
-                                     "aircraft_type", "ades", "adep"]
+                                     "aircraft_type", "wtc",
+                                     "airline"]
         self.target = "tow"
         self.features_columns = self.num_features + self.categorical_features
         self.all_columns = self.num_features + self.categorical_features + [self.target]
@@ -86,11 +86,14 @@ class SimpleModel:
         def objective(trial):
             if self.model_name == "xgb_dask":
                 # See https://xgboost.readthedocs.io/en/stable/parameter.html for details
-                params = {"n_estimators": trial.suggest_int('n_estimators', 50, 750),
+                params = {"n_estimators": trial.suggest_int('n_estimators', 800,
+                                                            1200),
                           "booster": trial.suggest_categorical("booster",
-                                                               ["gbtree", "dart"]),
+                                                               ["gbtree",
+                                                                "dart"]),
                           "eta": trial.suggest_float("eta", 0.01, 0.99),
-                          "max_depth": trial.suggest_int("max_depth", 3, 10, step=2),
+                          "max_depth": trial.suggest_int("max_depth", 3, 10,
+                                                         step=2),
                           "gamma": trial.suggest_float("gamma", 0.0, 10.00)}
             else:
                 raise ValueError(f"Model {self.model_name} is not supported")

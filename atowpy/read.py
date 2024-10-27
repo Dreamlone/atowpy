@@ -8,7 +8,7 @@ def read_challenge_set(working_directory: Path):
     file_name = "challenge_set.csv"
     df = pd.read_csv(Path(working_directory, file_name),
                      parse_dates=['date', 'actual_offblock_time',
-                                  'arrival_time'], nrows=50000)
+                                  'arrival_time'])
     logger.info(f"Latest datetime in the dataframe for fit: {max(df['date'])}")
     return df
 

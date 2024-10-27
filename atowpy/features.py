@@ -13,10 +13,10 @@ from atowpy.paths import get_data_path
 FEATURES_FOR_AGGREGATION = ['latitude', 'longitude', 'altitude', 'groundspeed', 'track', 'vertical_rate',
                             'u_component_of_wind', 'v_component_of_wind', 'temperature', 'specific_humidity',
                             'track_unwrapped']
-FIRST_ELEMENTS_TO_EXTRACT = 50
+FIRST_ELEMENTS_TO_EXTRACT = 30
 
 
-def _is_file_was_assimilated_already(parquet_file: Path, extraction_file_path: Path, reference_df: pd.DataFrame) -> bool:
+def _is_file_was_assimilated_already(parquet_file: Path, extraction_file_path: Path) -> bool:
     """ Checking whether the file was assimilated already """
     if extraction_file_path.exists() is False:
         # File with results was not created yet
@@ -50,7 +50,7 @@ def _assimilate_file(parquet_file: Path, extraction_file_path: Path, reference_d
     batch_features = []
     t = (Traffic.from_file(parquet_file)
          .filter()
-         .resample('1s')
+         .resample('3s')
          .eval())
     processed_flights = []
     processed_dates = []
@@ -149,8 +149,7 @@ def trajectory_features_preparation(reference_file: Union[Path, str]):
     for file in parquet_files:
         logger.info(f"Reference file '{reference_file.name}'. Parquet file {file.name} is processing ...")
         if _is_file_was_assimilated_already(parquet_file=file,
-                                            extraction_file_path=extraction_file_path,
-                                            reference_df=reference_df):
+                                            extraction_file_path=extraction_file_path):
             logger.info(f'Finished assimilating process. File was already successfully assimilated')
             continue
 
